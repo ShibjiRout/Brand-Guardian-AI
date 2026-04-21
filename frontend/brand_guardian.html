@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brand Guardian AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1e1e1e;
+    --accent: #e8ff00;
+    --accent-dim: rgba(232,255,0,0.1);
+    --red: #ff3b3b;
+    --red-dim: rgba(255,59,59,0.1);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,0.1);
+    --text: #f0f0f0;
+    --muted: #555;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 60px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tag::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(52px, 8vw, 88px);
+    line-height: 0.95;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-weight: 300;
+  }
+
+  /* Input section */
+  .input-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .input-section::before {
+    content: '01';
+    position: absolute;
+    top: -1px;
+    right: 32px;
+    font-family: var(--display);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background: var(--surface);
+    padding: 0 8px;
+    transform: translateY(-50%);
+  }
+
+  label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--muted);
+  }
+
+  button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: var(--display);
+    font-size: 18px;
+    letter-spacing: 2px;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  button:hover:not(:disabled) {
+    background: #fff;
+    transform: translateY(-1px);
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,255,0,0.2);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 32px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .status-bar.show { display: flex; }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(232,255,0,0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  /* Results */
+  #results { display: none; animation: fadeUp 0.5s ease both; }
+  #results.show { display: block; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-title {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 2px;
+  }
+
+  .status-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 3px;
+    padding: 8px 20px;
+    font-weight: 500;
+  }
+
+  .status-badge.fail {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+
+  .status-badge.pass {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 32px;
+  }
+
+  .meta-item {
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .meta-item .key {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .meta-item .val {
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* Violations */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .violation {
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .violation:hover { border-color: var(--red); }
+
+  .violation.critical {
+    border-left: 3px solid var(--red);
+  }
+
+  .violation.warning {
+    border-left: 3px solid #ff9500;
+  }
+
+  .violation-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .severity-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    font-weight: 500;
+  }
+
+  .severity-tag.critical {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid var(--red);
+  }
+
+  .severity-tag.warning {
+    background: rgba(255,149,0,0.1);
+    color: #ff9500;
+    border: 1px solid #ff9500;
+  }
+
+  .category {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .violation-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  /* Summary */
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-top: 32px;
+  }
+
+  .summary-box p {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.7;
+  }
+
+  .no-violations {
+    text-align: center;
+    padding: 40px;
+    border: 1px dashed var(--border);
+    margin-bottom: 12px;
+  }
+
+  .no-violations .check {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .no-violations p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+    letter-spacing: 2px;
+  }
+
+  /* Error */
+  .error-box {
+    display: none;
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--red);
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .error-box.show { display: block; }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="tag">Compliance Audit System</div>
+    <h1>BRAND<br><span>GUARDIAN</span></h1>
+    <p class="subtitle">// AI-powered video compliance auditing via LangGraph + Azure</p>
+  </header>
+
+  <div class="input-section">
+    <label>YouTube Video URL</label>
+    <div class="input-row">
+      <input type="text" id="videoUrl" placeholder="https://youtu.be/..." />
+      <button id="auditBtn" onclick="runAudit()">AUDIT</button>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <span id="statusText">Initializing audit session...</span>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div id="results">
+    <div class="result-header">
+      <div class="result-title">AUDIT REPORT</div>
+      <div class="status-badge" id="statusBadge">—</div>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-item">
+        <div class="key">Session ID</div>
+        <div class="val" id="metaSession">—</div>
+      </div>
+      <div class="meta-item">
+        <div class="key">Video ID</div>
+        <div class="val" id="metaVideo">—</div>
+      </div>
+      <div class="meta-item">
+        <div class="key">Violations</div>
+        <div class="val" id="metaCount">—</div>
+      </div>
+    </div>
+
+    <div class="section-label">Violations Detected</div>
+    <div id="violationsList"></div>
+
+    <div class="summary-box">
+      <div class="section-label" style="margin-bottom:12px;">Final Summary</div>
+      <p id="summaryText"></p>
+    </div>
+  </div>
+
+  <footer>
+    <span>Brand Guardian AI &copy; 2026</span>
+    <span>LangGraph · Azure Video Indexer · OpenAI</span>
+  </footer>
+
+</div>
+
+<script>
+  const API_URL = 'https://brandgurdian.azurewebsites.net/audit';
+
+  function setStatus(msg) {
+    document.getElementById('statusText').textContent = msg;
+  }
+
+  async function runAudit() {
+    const url = document.getElementById('videoUrl').value.trim();
+    if (!url) return;
+
+    // Reset UI
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('errorBox').classList.remove('show');
+    document.getElementById('statusBar').classList.add('show');
+    document.getElementById('auditBtn').disabled = true;
+
+    setStatus('Sending request to Brand Guardian API...');
+
+    try {
+      setStatus('Downloading and uploading video to Azure Video Indexer...');
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ video_url: url })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'API request failed');
+      }
+
+      const data = await response.json();
+
+      setStatus('Audit complete. Rendering results...');
+      setTimeout(() => renderResults(data), 400);
+
+    } catch (err) {
+      document.getElementById('statusBar').classList.remove('show');
+      const box = document.getElementById('errorBox');
+      box.textContent = '⚠ ' + err.message;
+      box.classList.add('show');
+      document.getElementById('auditBtn').disabled = false;
+    }
+  }
+
+  function renderResults(data) {
+    document.getElementById('statusBar').classList.remove('show');
+
+    // Meta
+    document.getElementById('metaSession').textContent = data.session_id;
+    document.getElementById('metaVideo').textContent = data.video_id;
+    document.getElementById('metaCount').textContent = data.compliance_results.length;
+    document.getElementById('summaryText').textContent = data.final_report;
+
+    // Status badge
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = data.status;
+    badge.className = 'status-badge ' + (data.status === 'PASS' ? 'pass' : 'fail');
+
+    // Violations
+    const list = document.getElementById('violationsList');
+    list.innerHTML = '';
+
+    if (data.compliance_results.length === 0) {
+      list.innerHTML = `
+        <div class="no-violations">
+          <div class="check">✓</div>
+          <p>NO VIOLATIONS DETECTED</p>
+        </div>`;
+    } else {
+      data.compliance_results.forEach(issue => {
+        const sev = (issue.severity || '').toLowerCase();
+        list.innerHTML += `
+          <div class="violation ${sev}">
+            <div class="violation-top">
+              <span class="severity-tag ${sev}">${issue.severity}</span>
+              <span class="category">${issue.category}</span>
+            </div>
+            <p class="violation-desc">${issue.description}</p>
+          </div>`;
+      });
+    }
+
+    document.getElementById('results').classList.add('show');
+    document.getElementById('auditBtn').disabled = false;
+  }
+
+  // Allow Enter key
+  document.getElementById('videoUrl').addEventListener('keydown', e => {
+    if (e.key === 'Enter') runAudit();
+  });
+</script>
+
+</body>
+</html>

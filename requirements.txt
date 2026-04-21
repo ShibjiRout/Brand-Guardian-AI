@@ -1,0 +1,73 @@
+# ==========================================
+# CORE API - server.py
+# ==========================================
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+
+# ==========================================
+# LANGCHAIN + LANGGRAPH - workflow.py, nodes.py
+# ==========================================
+langchain
+langchain-community
+langchain-core
+langchain-openai
+langchain-text-splitters
+langgraph
+langgraph-checkpoint
+langgraph-prebuilt
+langgraph-sdk
+langsmith
+
+# ==========================================
+# OPENAI - nodes.py, index_documents.py
+# ==========================================
+openai
+tiktoken
+
+# ==========================================
+# AZURE IDENTITY - video_indexer.py
+# ==========================================
+azure-identity
+
+# ==========================================
+# AZURE MONITOR - telemetry.py
+# ==========================================
+azure-monitor-opentelemetry
+
+# ==========================================
+# AZURE SEARCH - nodes.py, index_documents.py
+# ==========================================
+azure-search-documents
+
+# ==========================================
+# OPENTELEMETRY - required by azure-monitor
+# ==========================================
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-semantic-conventions
+opentelemetry-instrumentation-fastapi
+
+# ==========================================
+# VIDEO DOWNLOAD - video_indexer.py
+# ==========================================
+yt-dlp
+
+# ==========================================
+# HTTP REQUESTS - video_indexer.py
+# ==========================================
+requests
+requests-toolbelt
+
+# ==========================================
+# PDF LOADING - index_documents.py
+# ==========================================
+pypdf
+
+# ==========================================
+# HTTP CLIENT - indirect dependency of openai/langchain
+# ==========================================
+httpx
+anyio

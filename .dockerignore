@@ -1,0 +1,53 @@
+# Virtual Environment - never include this
+.venv
+venv
+env
+
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables - never include secrets
+.env
+.env.*
+
+# Temp files generated during runtime
+temp_audit_video.mp4
+*.mp4
+*.avi
+*.mov
+
+# IDE and editor files
+.vscode
+.idea
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+tests/
+*.test.py
+
+# Logs
+*.log
+logs/
+
+# Notebook files
+*.ipynb
+.ipynb_checkpoints
+
+# Documentation
+*.md
+docs/
+
+# Frontend HTML (not needed in backend container)
+*.html
