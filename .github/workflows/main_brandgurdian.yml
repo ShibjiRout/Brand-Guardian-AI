@@ -47,7 +47,7 @@ jobs:
     steps:
       
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FB03C42D74C94D30A9C5CCADD7CB6839 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2E7D293F0E39430CA64CC3E4FBE036FB }}
@@ -55,7 +55,7 @@ jobs:
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'brandgurdian'
           slot-name: 'Production'
