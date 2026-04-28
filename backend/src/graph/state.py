@@ -17,10 +17,12 @@ class VideoAuditState(TypedDict):
     # --- Input Parameters ---
     video_url: str
     video_id: str
+    # When set, skip yt-dlp download and use this pre-uploaded file instead (Option 2)
+    video_file_path: Optional[str]
 
     # --- Ingestion & Extraction Data ---
     # Optional because they are populated asynchronously by the Indexer Node.
-    local_file_path: Optional[str]  
+    local_file_path: Optional[str]
     video_metadata: Dict[str, Any]  # e.g., {"duration": 15, "resolution": "1080p"}
     transcript: Optional[str]       # Full extracted speech-to-text
     ocr_text: List[str]             # List of recognized on-screen text

@@ -40,24 +40,42 @@ class VideoIndexerService:
             raise Exception(f"Failed to get VI Account Token: {response.text}")
         return response.json().get("accessToken")
 
-    # --- NEW FUNCTION: Download from YouTube ---
-    def download_youtube_video(self, url, output_path="temp_video.mp4"):
-        """Downloads a YouTube video to a local file."""
-        logger.info(f"Downloading YouTube video: {url}")
-        
+    def get_youtube_metadata(self, url: str) -> dict:
+        """Extracts metadata from a YouTube URL without downloading the video."""
+        logger.info(f"Extracting metadata for: {url}")
         ydl_opts = {
-         'format': 'best',
-         'outtmpl': output_path, # output template
-         'quiet': False,
-         'no_warnings': False,
-    # Add these options:
-         'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
-         'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'extract_flat': False,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+        }
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            return {
+                "title": info.get("title", ""),
+                "duration": info.get("duration"),
+                "uploader": info.get("uploader", ""),
+                "description": info.get("description", ""),
+                "platform": "youtube",
+            }
+        except Exception as e:
+            raise Exception(f"YouTube Metadata Extraction Failed: {str(e)}")
 
-}
-        
+    def download_youtube_video(self, url, output_path="temp_video.mp4"):
+        """Downloads a YouTube video to a local file (works locally, may fail on cloud)."""
+        logger.info(f"Downloading YouTube video: {url}")
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': output_path,
+            'quiet': False,
+            'no_warnings': False,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+        }
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])

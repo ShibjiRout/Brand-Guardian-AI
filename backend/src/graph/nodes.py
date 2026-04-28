@@ -29,31 +29,51 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     
     logger.info(f"--- [Node: Indexer] Processing: {video_url} ---")
     
+    video_file_path = state.get("video_file_path")  # set by Option 2 (manual upload)
     local_filename = "temp_audit_video.mp4"
-    
+    cleanup_local = False
+
     try:
         vi_service = VideoIndexerService()
-        
-        # 1. DOWNLOAD
-        if "youtube.com" in video_url or "youtu.be" in video_url:
-            local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
-        else:
-            raise Exception("Please provide a valid YouTube URL for this test.")
 
-        # 2. UPLOAD
+        if video_file_path:
+            # --- OPTION 2: Manual upload + metadata-only from YouTube URL ---
+            logger.info(f"[Option 2] Using pre-uploaded file: {video_file_path}")
+            local_path = video_file_path
+
+            yt_metadata = {}
+            if video_url and ("youtube.com" in video_url or "youtu.be" in video_url):
+                try:
+                    yt_metadata = vi_service.get_youtube_metadata(video_url)
+                    logger.info(f"YouTube metadata extracted: {yt_metadata.get('title')}")
+                except Exception as meta_err:
+                    logger.warning(f"Metadata extraction failed (non-fatal): {meta_err}")
+        else:
+            # --- OPTION 1: Auto-download from YouTube ---
+            logger.info("[Option 1] Downloading from YouTube...")
+            if not (video_url and ("youtube.com" in video_url or "youtu.be" in video_url)):
+                raise Exception("Please provide a valid YouTube URL.")
+            local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
+            yt_metadata = vi_service.get_youtube_metadata(video_url)
+            cleanup_local = True
+
+        # UPLOAD to Azure Video Indexer
         azure_video_id = vi_service.upload_video(local_path, video_name=video_id_input)
         logger.info(f"Upload Success. Azure ID: {azure_video_id}")
-        
-        # 3. CLEANUP
-        if os.path.exists(local_path):
+
+        # CLEANUP downloaded file (only for Option 1)
+        if cleanup_local and os.path.exists(local_path):
             os.remove(local_path)
 
-        # 4. WAIT
+        # WAIT for processing
         raw_insights = vi_service.wait_for_processing(azure_video_id)
-        
-        # 5. EXTRACT
+
+        # EXTRACT transcript/OCR
         clean_data = vi_service.extract_data(raw_insights)
-        
+
+        # Merge yt_metadata into video_metadata
+        clean_data["video_metadata"] = {**clean_data.get("video_metadata", {}), **yt_metadata}
+
         logger.info("--- [Node: Indexer] Extraction Complete ---")
         return clean_data
 
@@ -62,7 +82,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         return {
             "errors": [str(e)],
             "final_status": "FAIL",
-            "transcript": "", 
+            "transcript": "",
             "ocr_text": []
         }
 

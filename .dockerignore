@@ -49,5 +49,4 @@ logs/
 *.md
 docs/
 
-# Frontend HTML (not needed in backend container)
-*.html
+# Frontend HTML intentionally included — served by FastAPI at GET /

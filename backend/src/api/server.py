@@ -1,15 +1,13 @@
-import uuid        # Generate unique session IDs
-import logging     # Application logging
-from fastapi import FastAPI, HTTPException  
-# ↑ FastAPI = modern web framework (like Flask but faster)
-# ↑ HTTPException = handles errors with proper HTTP status codes
-
-from pydantic import BaseModel  
-# ↑ Pydantic = data validation library (ensures API requests have correct format)
-
-from typing import List, Optional  
-# ↑ Type hints for better code clarity and auto-completion
-
+import os
+import uuid
+import logging
+import shutil
+import tempfile
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -58,8 +56,14 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
-
 )
+
+# Serve the frontend HTML
+FRONTEND_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "frontend", "index.html"))
+
+@app.get("/", response_class=FileResponse)
+def serve_ui():
+    return FileResponse(FRONTEND_HTML)
 # FastAPI automatically creates:
 # - Interactive docs at http://localhost:8000/docs
 # - OpenAPI schema at http://localhost:8000/openapi.json
@@ -222,6 +226,49 @@ async def audit_video(request: AuditRequest):
         # {
         #     "detail": "Workflow Execution Failed: YouTube download error"
         # }
+
+
+# ========== OPTION 2: AUDIT WITH MANUAL VIDEO UPLOAD ==========
+# Use this when running on cloud where YouTube blocks yt-dlp downloads.
+# The client uploads the video file directly; the URL is used only for metadata.
+@app.post("/audit-upload", response_model=AuditResponse)
+async def audit_video_with_upload(
+    video_url: str = Form(...),
+    video_file: UploadFile = File(...),
+):
+    session_id = str(uuid.uuid4())
+    video_id_short = f"vid_{session_id[:8]}"
+    logger.info(f"[Option 2] Upload audit: {video_url} (Session: {session_id})")
+
+    suffix = "." + (video_file.filename.rsplit(".", 1)[-1] if "." in video_file.filename else "mp4")
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    try:
+        shutil.copyfileobj(video_file.file, tmp)
+        tmp.close()
+
+        initial_inputs = {
+            "video_url": video_url,
+            "video_id": video_id_short,
+            "video_file_path": tmp.name,
+            "compliance_results": [],
+            "errors": [],
+        }
+
+        final_state = compliance_graph.invoke(initial_inputs)
+
+        return AuditResponse(
+            session_id=session_id,
+            video_id=final_state.get("video_id"),
+            status=final_state.get("final_status", "UNKNOWN"),
+            final_report=final_state.get("final_report", "No report generated."),
+            compliance_results=final_state.get("compliance_results", []),
+        )
+    except Exception as e:
+        logger.error(f"Upload Audit Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Workflow Execution Failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp.name):
+            os.remove(tmp.name)
 
 
 # ========== STEP 8: HEALTH CHECK ENDPOINT ==========

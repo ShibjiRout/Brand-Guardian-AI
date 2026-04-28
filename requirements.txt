@@ -2,7 +2,8 @@
 # CORE API - server.py
 # ==========================================
 fastapi
-uvicorn
+uvicorn[standard]
+python-multipart
 pydantic
 pydantic-settings
 python-dotenv
