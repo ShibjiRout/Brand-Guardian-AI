@@ -485,7 +485,7 @@
 </div>
 
 <script>
-  const API_BASE = 'http://localhost:8000';
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
   let currentMode = 1;
 
   function setMode(m) {
