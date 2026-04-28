@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture — Brand Guardian AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #161616;
+    --border: #1e1e1e;
+    --accent: #e8ff00;
+    --accent-dim: rgba(232,255,0,0.08);
+    --red: #ff3b3b;
+    --green: #00ff88;
+    --blue: #4fc3f7;
+    --orange: #ff9500;
+    --purple: #b388ff;
+    --text: #f0f0f0;
+    --muted: #555;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,255,0,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,255,0,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+
+  .nav-back {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+
+  .nav-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  /* PAGE HEADER */
+  .page-header { margin-bottom: 56px; }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tag::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(40px, 7vw, 72px);
+    line-height: 0.95;
+    letter-spacing: 2px;
+  }
+  h1 span { color: var(--accent); }
+
+  .page-sub {
+    margin-top: 14px;
+    font-size: 13px;
+    color: #666;
+    font-family: var(--mono);
+  }
+
+  /* SECTION */
+  .section { margin-bottom: 72px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ══════════════════════════════════════════
+     HIGH-LEVEL DIAGRAM
+  ══════════════════════════════════════════ */
+  .hl-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+
+  .hl-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 22px;
+    min-width: 130px;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .hl-box:hover { border-color: var(--accent); }
+
+  .hl-box .icon { font-size: 22px; margin-bottom: 8px; }
+  .hl-box .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .hl-box .sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .hl-box.accent { border-color: rgba(232,255,0,0.3); background: var(--accent-dim); }
+  .hl-box.accent .label { color: var(--accent); }
+
+  .hl-box.azure { border-color: rgba(79,195,247,0.3); }
+  .hl-box.azure .label { color: var(--blue); }
+
+  .hl-box.ai { border-color: rgba(179,136,255,0.3); }
+  .hl-box.ai .label { color: var(--purple); }
+
+  .hl-box.green { border-color: rgba(0,255,136,0.3); }
+  .hl-box.green .label { color: var(--green); }
+
+  .arrow {
+    font-size: 18px;
+    color: var(--muted);
+    padding: 0 6px;
+    align-self: center;
+  }
+
+  /* ══════════════════════════════════════════
+     LOW-LEVEL DIAGRAM
+  ══════════════════════════════════════════ */
+  .ll-diagram {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  /* Row = a layer */
+  .ll-row {
+    background: var(--bg);
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+  }
+
+  .ll-label {
+    background: var(--surface);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 16px 10px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ll-cells {
+    flex: 1;
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .ll-cell {
+    flex: 1;
+    background: var(--surface);
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ll-cell .c-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .ll-cell .c-desc {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.55;
+  }
+
+  .ll-cell .c-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    width: fit-content;
+    margin-top: 4px;
+  }
+
+  /* colour variants */
+  .ll-cell.user    { border-top: 2px solid var(--accent);  } .ll-cell.user .c-title { color: var(--accent); }
+  .ll-cell.api     { border-top: 2px solid var(--orange);  } .ll-cell.api .c-title  { color: var(--orange); }
+  .ll-cell.graph   { border-top: 2px solid var(--purple);  } .ll-cell.graph .c-title{ color: var(--purple); }
+  .ll-cell.azure   { border-top: 2px solid var(--blue);    } .ll-cell.azure .c-title{ color: var(--blue); }
+  .ll-cell.ai      { border-top: 2px solid #b5e853;        } .ll-cell.ai .c-title   { color: #b5e853; }
+  .ll-cell.obs     { border-top: 2px solid var(--muted);   } .ll-cell.obs .c-title  { color: var(--muted); }
+
+  .tag-accent  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,255,0,0.2); }
+  .tag-orange  { background: rgba(255,149,0,0.08); color: var(--orange); border: 1px solid rgba(255,149,0,0.2); }
+  .tag-purple  { background: rgba(179,136,255,0.08); color: var(--purple); border: 1px solid rgba(179,136,255,0.2); }
+  .tag-blue    { background: rgba(79,195,247,0.08); color: var(--blue); border: 1px solid rgba(79,195,247,0.2); }
+  .tag-green   { background: rgba(0,255,136,0.08); color: var(--green); border: 1px solid rgba(0,255,136,0.2); }
+  .tag-muted   { background: #1a1a1a; color: var(--muted); border: 1px solid var(--border); }
+
+  /* DATA FLOW */
+  .flow {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-step:first-child { border-top: 1px solid var(--border); }
+
+  .flow-num {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 36px;
+  }
+
+  .flow-body {}
+  .flow-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .flow-desc { font-size: 12px; color: #555; line-height: 1.6; }
+  .flow-tech {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 6px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="nav-back" href="/">&larr; HOME</a>
+    <span class="nav-title">Architecture Diagrams</span>
+  </nav>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="tag">System Design</div>
+    <h1>ARCHITECTURE<br><span>OVERVIEW</span></h1>
+    <p class="page-sub">// High-level system map &amp; low-level component breakdown</p>
+  </div>
+
+
+  <!-- ══ HIGH-LEVEL ══ -->
+  <div class="section">
+    <div class="section-label">01 — High-Level Architecture</div>
+
+    <div class="hl-diagram">
+      <!-- User -->
+      <div class="hl-box accent">
+        <div class="icon">&#128100;</div>
+        <div class="label">User</div>
+        <div class="sub">Browser</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- FastAPI -->
+      <div class="hl-box">
+        <div class="icon">&#9889;</div>
+        <div class="label">FastAPI</div>
+        <div class="sub">REST API</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- LangGraph -->
+      <div class="hl-box ai">
+        <div class="icon">&#127922;</div>
+        <div class="label">LangGraph</div>
+        <div class="sub">Orchestration</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- Azure VI -->
+      <div class="hl-box azure">
+        <div class="icon">&#127916;</div>
+        <div class="label">Azure VI</div>
+        <div class="sub">Transcript + OCR</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- RAG -->
+      <div class="hl-box azure">
+        <div class="icon">&#128269;</div>
+        <div class="label">AI Search</div>
+        <div class="sub">Rule Retrieval</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- GPT-4o -->
+      <div class="hl-box ai">
+        <div class="icon">&#129504;</div>
+        <div class="label">GPT-4o</div>
+        <div class="sub">Audit + Report</div>
+      </div>
+      <div class="arrow">&#8594;</div>
+
+      <!-- Result -->
+      <div class="hl-box green">
+        <div class="icon">&#9989;</div>
+        <div class="label">Result</div>
+        <div class="sub">PASS / FAIL</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Frontend / User</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> Backend API</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> AI Orchestration</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Azure Services</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Output</div>
+    </div>
+  </div>
+
+
+  <!-- ══ LOW-LEVEL ══ -->
+  <div class="section">
+    <div class="section-label">02 — Low-Level Component Breakdown</div>
+
+    <div class="ll-diagram">
+
+      <!-- LAYER: CLIENT -->
+      <div class="ll-row">
+        <div class="ll-label">Client</div>
+        <div class="ll-cells">
+          <div class="ll-cell user">
+            <div class="c-title">Landing Page</div>
+            <div class="c-desc">index.html — project overview, features, how-it-works, launch button</div>
+            <div class="c-tag tag-accent">Static HTML</div>
+          </div>
+          <div class="ll-cell user">
+            <div class="c-title">Audit Tool</div>
+            <div class="c-desc">app.html — Option 1 (URL) &amp; Option 2 (file upload + title/description fields)</div>
+            <div class="c-tag tag-accent">Static HTML</div>
+          </div>
+          <div class="ll-cell user">
+            <div class="c-title">Architecture Page</div>
+            <div class="c-desc">architecture.html — this page; high-level and low-level system diagrams</div>
+            <div class="c-tag tag-accent">Static HTML</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER: API -->
+      <div class="ll-row">
+        <div class="ll-label">API Layer</div>
+        <div class="ll-cells">
+          <div class="ll-cell api">
+            <div class="c-title">POST /audit</div>
+            <div class="c-desc">Accepts YouTube URL, triggers yt-dlp download + full workflow. Option 1.</div>
+            <div class="c-tag tag-orange">FastAPI</div>
+          </div>
+          <div class="ll-cell api">
+            <div class="c-title">POST /audit-upload</div>
+            <div class="c-desc">Accepts video file + URL + title + description. No yt-dlp. Cloud-safe. Option 2.</div>
+            <div class="c-tag tag-orange">FastAPI</div>
+          </div>
+          <div class="ll-cell api">
+            <div class="c-title">GET /health</div>
+            <div class="c-desc">Health check endpoint for load balancers and uptime monitors.</div>
+            <div class="c-tag tag-orange">FastAPI</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER: LANGGRAPH -->
+      <div class="ll-row">
+        <div class="ll-label">Graph</div>
+        <div class="ll-cells">
+          <div class="ll-cell graph">
+            <div class="c-title">State Schema</div>
+            <div class="c-desc">VideoAuditState — holds video_url, video_id, transcript, ocr_text, video_metadata, compliance_results, final_status, final_report, errors</div>
+            <div class="c-tag tag-purple">TypedDict</div>
+          </div>
+          <div class="ll-cell graph">
+            <div class="c-title">Node 1: Indexer</div>
+            <div class="c-desc">Downloads or receives video → uploads to Azure VI → polls until processed → extracts transcript &amp; OCR → merges metadata</div>
+            <div class="c-tag tag-purple">LangGraph Node</div>
+          </div>
+          <div class="ll-cell graph">
+            <div class="c-title">Node 2: Auditor</div>
+            <div class="c-desc">Embeds transcript → retrieves top-3 rules from vector store → sends to GPT-4o → parses JSON violation report</div>
+            <div class="c-tag tag-purple">LangGraph Node</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER: AZURE -->
+      <div class="ll-row">
+        <div class="ll-label">Azure</div>
+        <div class="ll-cells">
+          <div class="ll-cell azure">
+            <div class="c-title">Video Indexer</div>
+            <div class="c-desc">Processes uploaded video file → generates transcript (speech-to-text) and OCR (on-screen text) insights JSON</div>
+            <div class="c-tag tag-blue">Azure VI API</div>
+          </div>
+          <div class="ll-cell azure">
+            <div class="c-title">AI Search</div>
+            <div class="c-desc">Vector store of brand compliance rules. Queried via OpenAI embeddings (text-embedding-3-small) with k=3 similarity search</div>
+            <div class="c-tag tag-blue">Azure AI Search</div>
+          </div>
+          <div class="ll-cell azure">
+            <div class="c-title">Azure Monitor</div>
+            <div class="c-desc">Application Insights collects request traces, latency, errors, and LangGraph execution telemetry</div>
+            <div class="c-tag tag-blue">App Insights</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER: AI -->
+      <div class="ll-row">
+        <div class="ll-label">AI</div>
+        <div class="ll-cells">
+          <div class="ll-cell ai">
+            <div class="c-title">GPT-4o</div>
+            <div class="c-desc">Receives retrieved rules + transcript + OCR. Returns structured JSON: compliance_results[], status, final_report</div>
+            <div class="c-tag tag-green">OpenAI</div>
+          </div>
+          <div class="ll-cell ai">
+            <div class="c-title">text-embedding-3-small</div>
+            <div class="c-desc">Embeds the query (transcript + OCR) into a vector for similarity search against the compliance rule knowledge base</div>
+            <div class="c-tag tag-green">OpenAI</div>
+          </div>
+          <div class="ll-cell ai">
+            <div class="c-title">LangSmith</div>
+            <div class="c-desc">Traces every LangGraph run — node inputs/outputs, LLM calls, retrieval results — for debugging and evaluation</div>
+            <div class="c-tag tag-green">LangChain</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAYER: OBS -->
+      <div class="ll-row">
+        <div class="ll-label">Deploy</div>
+        <div class="ll-cells">
+          <div class="ll-cell obs">
+            <div class="c-title">Docker</div>
+            <div class="c-desc">Single container image — FastAPI server + all backend dependencies. Built and pushed to Azure Container Registry</div>
+            <div class="c-tag tag-muted">Dockerfile</div>
+          </div>
+          <div class="ll-cell obs">
+            <div class="c-title">GitHub Actions</div>
+            <div class="c-desc">On push to main — builds Docker image, pushes to ACR, deploys to Azure Web App (brandgurdian)</div>
+            <div class="c-tag tag-muted">CI/CD</div>
+          </div>
+          <div class="ll-cell obs">
+            <div class="c-title">Azure Web App</div>
+            <div class="c-desc">Container-based App Service running the FastAPI server. Serves landing page, audit tool, and all API endpoints</div>
+            <div class="c-tag tag-muted">Azure PaaS</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══ DATA FLOW ══ -->
+  <div class="section">
+    <div class="section-label">03 — Request Data Flow</div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">01</div>
+        <div class="flow-body">
+          <div class="flow-title">User Submits Video</div>
+          <div class="flow-desc">Option 1: YouTube URL posted to /audit. Option 2: video file + URL + title + description posted to /audit-upload.</div>
+          <div class="flow-tech">frontend &rarr; FastAPI</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">02</div>
+        <div class="flow-body">
+          <div class="flow-title">Indexer Node — Video Ingestion</div>
+          <div class="flow-desc">Option 1 uses yt-dlp to download. Option 2 uses the uploaded file directly. Video is uploaded to Azure Video Indexer via REST API.</div>
+          <div class="flow-tech">LangGraph Node 1 &rarr; Azure Video Indexer</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">03</div>
+        <div class="flow-body">
+          <div class="flow-title">Azure Processes Video</div>
+          <div class="flow-desc">Azure Video Indexer extracts transcript (speech-to-text) and OCR (on-screen text). Server polls every 30s until state = "Processed".</div>
+          <div class="flow-tech">Azure Video Indexer &rarr; insights JSON</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">04</div>
+        <div class="flow-body">
+          <div class="flow-title">Auditor Node — RAG Retrieval</div>
+          <div class="flow-desc">Transcript + OCR embedded via text-embedding-3-small. Top-3 matching compliance rules retrieved from Azure AI Search vector store.</div>
+          <div class="flow-tech">OpenAI Embeddings &rarr; Azure AI Search</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">05</div>
+        <div class="flow-body">
+          <div class="flow-title">GPT-4o Compliance Audit</div>
+          <div class="flow-desc">Retrieved rules + transcript + OCR + video metadata sent to GPT-4o. Returns structured JSON with violations, severity, status, and final report.</div>
+          <div class="flow-tech">GPT-4o &rarr; JSON audit result</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">06</div>
+        <div class="flow-body">
+          <div class="flow-title">Response Delivered</div>
+          <div class="flow-desc">FastAPI maps graph output to AuditResponse model and returns JSON. Frontend renders violations by severity and final PASS/FAIL verdict.</div>
+          <div class="flow-tech">FastAPI &rarr; Browser</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Brand Guardian AI &copy; 2026</span>
+    <span>LangGraph &middot; Azure Video Indexer &middot; OpenAI GPT-4o</span>
+  </footer>
+
+</div>
+</body>
+</html>

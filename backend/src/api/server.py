@@ -68,6 +68,10 @@ def serve_landing():
 @app.get("/app", response_class=FileResponse)
 def serve_app():
     return FileResponse(os.path.join(FRONTEND_DIR, "app.html"))
+
+@app.get("/architecture", response_class=FileResponse)
+def serve_architecture():
+    return FileResponse(os.path.join(FRONTEND_DIR, "architecture.html"))
 # FastAPI automatically creates:
 # - Interactive docs at http://localhost:8000/docs
 # - OpenAPI schema at http://localhost:8000/openapi.json

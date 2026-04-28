@@ -113,6 +113,18 @@
     letter-spacing: 2px;
   }
 
+  a.arch-link {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  a.arch-link:hover { color: var(--accent); }
+
   /* ── DIVIDER ── */
   .section-label {
     font-family: var(--mono);
@@ -283,6 +295,7 @@
       LAUNCH AUDIT TOOL <span class="arrow">&#8594;</span>
     </a>
     <p class="launch-hint">// Submit a YouTube URL or upload a video file to begin</p>
+    <a class="arch-link" href="/architecture">View Architecture Diagrams &rarr;</a>
   </div>
 
   <br><br>
