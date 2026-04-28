@@ -37,17 +37,14 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
         vi_service = VideoIndexerService()
 
         if video_file_path:
-            # --- OPTION 2: Manual upload + metadata-only from YouTube URL ---
+            # --- OPTION 2: Manual upload — use user-provided title/description (no yt-dlp) ---
             logger.info(f"[Option 2] Using pre-uploaded file: {video_file_path}")
             local_path = video_file_path
-
-            yt_metadata = {}
-            if video_url and ("youtube.com" in video_url or "youtu.be" in video_url):
-                try:
-                    yt_metadata = vi_service.get_youtube_metadata(video_url)
-                    logger.info(f"YouTube metadata extracted: {yt_metadata.get('title')}")
-                except Exception as meta_err:
-                    logger.warning(f"Metadata extraction failed (non-fatal): {meta_err}")
+            yt_metadata = {
+                "title": state.get("video_title", ""),
+                "description": state.get("video_description", ""),
+                "platform": "youtube",
+            }
         else:
             # --- OPTION 1: Auto-download from YouTube ---
             logger.info("[Option 1] Downloading from YouTube...")

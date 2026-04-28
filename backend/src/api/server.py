@@ -59,11 +59,15 @@ app.add_middleware(
 )
 
 # Serve the frontend HTML
-FRONTEND_HTML = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "frontend", "index.html"))
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "frontend"))
 
 @app.get("/", response_class=FileResponse)
-def serve_ui():
-    return FileResponse(FRONTEND_HTML)
+def serve_landing():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+@app.get("/app", response_class=FileResponse)
+def serve_app():
+    return FileResponse(os.path.join(FRONTEND_DIR, "app.html"))
 # FastAPI automatically creates:
 # - Interactive docs at http://localhost:8000/docs
 # - OpenAPI schema at http://localhost:8000/openapi.json
@@ -234,6 +238,8 @@ async def audit_video(request: AuditRequest):
 @app.post("/audit-upload", response_model=AuditResponse)
 async def audit_video_with_upload(
     video_url: str = Form(...),
+    video_title: str = Form(""),
+    video_description: str = Form(""),
     video_file: UploadFile = File(...),
 ):
     session_id = str(uuid.uuid4())
@@ -250,6 +256,8 @@ async def audit_video_with_upload(
             "video_url": video_url,
             "video_id": video_id_short,
             "video_file_path": tmp.name,
+            "video_title": video_title,
+            "video_description": video_description,
             "compliance_results": [],
             "errors": [],
         }

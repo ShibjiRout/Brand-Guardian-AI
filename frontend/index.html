@@ -11,11 +11,9 @@
     --surface: #111111;
     --border: #1e1e1e;
     --accent: #e8ff00;
-    --accent-dim: rgba(232,255,0,0.1);
+    --accent-dim: rgba(232,255,0,0.07);
     --red: #ff3b3b;
-    --red-dim: rgba(255,59,59,0.1);
     --green: #00ff88;
-    --green-dim: rgba(0,255,136,0.1);
     --text: #f0f0f0;
     --muted: #555;
     --mono: 'DM Mono', monospace;
@@ -46,14 +44,15 @@
   }
 
   .container {
-    max-width: 860px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 60px 24px;
+    padding: 72px 24px 80px;
     position: relative;
     z-index: 1;
   }
 
-  header { margin-bottom: 48px; animation: fadeDown 0.6s ease both; }
+  /* ── HEADER ── */
+  header { margin-bottom: 64px; animation: fadeDown 0.6s ease both; }
 
   .tag {
     font-family: var(--mono);
@@ -61,311 +60,192 @@
     letter-spacing: 3px;
     color: var(--accent);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
-
   .tag::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
 
   h1 {
     font-family: var(--display);
-    font-size: clamp(52px, 8vw, 88px);
-    line-height: 0.95;
+    font-size: clamp(56px, 10vw, 100px);
+    line-height: 0.92;
     letter-spacing: 2px;
   }
-
   h1 span { color: var(--accent); }
 
   .subtitle {
-    margin-top: 16px;
-    font-size: 14px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-weight: 300;
+    margin-top: 20px;
+    font-size: 15px;
+    color: #888;
+    max-width: 560px;
+    line-height: 1.7;
   }
 
-  /* Mode toggle */
-  .mode-toggle {
-    display: flex;
-    gap: 0;
-    margin-bottom: 24px;
-    border: 1px solid var(--border);
-    width: fit-content;
-    animation: fadeUp 0.5s 0.05s ease both;
+  /* ── LAUNCH BUTTON ── */
+  .launch-wrap {
+    margin-top: 40px;
+    animation: fadeUp 0.6s 0.15s ease both;
   }
 
-  .mode-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: 10px 24px;
-    cursor: pointer;
-    background: transparent;
-    color: var(--muted);
-    border: none;
-    transition: all 0.2s;
-  }
-
-  .mode-btn.active {
+  a.launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
     background: var(--accent);
     color: var(--bg);
-  }
-
-  .mode-btn:hover:not(.active) { color: var(--text); }
-
-  /* Input section */
-  .input-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 32px;
-    margin-bottom: 24px;
-    position: relative;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-
-  .input-section::before {
     font-family: var(--display);
-    font-size: 11px;
+    font-size: 22px;
+    letter-spacing: 3px;
+    padding: 16px 40px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  a.launch-btn:hover { background: #fff; transform: translateY(-2px); }
+  a.launch-btn .arrow { font-size: 18px; }
+
+  .launch-hint {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
     letter-spacing: 2px;
-    color: var(--accent);
-    background: var(--surface);
-    padding: 0 8px;
-    position: absolute;
-    top: -1px;
-    right: 32px;
-    transform: translateY(-50%);
   }
 
-  .section-opt1::before { content: 'OPTION 1 — AUTO DOWNLOAD'; }
-  .section-opt2::before { content: 'OPTION 2 — MANUAL UPLOAD'; }
-
-  label {
-    display: block;
+  /* ── DIVIDER ── */
+  .section-label {
     font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 2px;
+    font-size: 10px;
+    letter-spacing: 3px;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── FEATURE GRID ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s 0.2s ease both;
   }
 
-  .field { margin-bottom: 20px; }
-  .field:last-child { margin-bottom: 0; }
+  .feature {
+    background: var(--surface);
+    padding: 28px 24px;
+    transition: background 0.2s;
+  }
+  .feature:hover { background: #161616; }
 
-  .input-row { display: flex; gap: 12px; }
+  .feature-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
 
-  input[type="text"], input[type="url"] {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
+  .feature-title {
     font-family: var(--mono);
-    font-size: 14px;
-    padding: 14px 16px;
-    outline: none;
-    transition: border-color 0.2s;
-    width: 100%;
-  }
-
-  input[type="text"]:focus, input[type="url"]:focus { border-color: var(--accent); }
-  input::placeholder { color: var(--muted); }
-
-  /* File upload */
-  .file-drop {
-    border: 1px dashed var(--border);
-    padding: 28px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative;
-  }
-
-  .file-drop:hover, .file-drop.drag-over {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
-
-  .file-drop input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .file-drop-icon {
-    font-size: 28px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
     margin-bottom: 8px;
   }
 
-  .file-drop-text {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 1px;
-  }
-
-  .file-drop-text span { color: var(--accent); }
-
-  .file-name {
-    margin-top: 8px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--green);
-    display: none;
-  }
-
-  .hint {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 8px;
-    letter-spacing: 1px;
-  }
-
-  button.audit-btn {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    font-family: var(--display);
-    font-size: 18px;
-    letter-spacing: 2px;
-    padding: 14px 32px;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  button.audit-btn:hover:not(:disabled) { background: #fff; transform: translateY(-1px); }
-  button.audit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  /* Status */
-  .status-bar {
-    display: none;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: var(--accent-dim);
-    border: 1px solid rgba(232,255,0,0.2);
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--accent);
-    margin-bottom: 32px;
-    animation: fadeUp 0.3s ease both;
-  }
-
-  .status-bar.show { display: flex; }
-
-  .spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(232,255,0,0.3);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
-  }
-
-  /* Error */
-  .error-box {
-    display: none;
-    background: var(--red-dim);
-    border: 1px solid var(--red);
-    padding: 20px 24px;
-    margin-bottom: 32px;
-    font-family: var(--mono);
+  .feature-desc {
     font-size: 13px;
-    color: var(--red);
-    animation: fadeUp 0.3s ease both;
+    color: #777;
+    line-height: 1.65;
   }
 
-  .error-box.show { display: block; }
+  /* ── HOW IT WORKS ── */
+  .steps {
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s 0.25s ease both;
+  }
 
-  /* Results */
-  #results { display: none; animation: fadeUp 0.5s ease both; }
-  #results.show { display: block; }
-
-  .result-header {
+  .step {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
+    gap: 20px;
+    padding: 20px 0;
     border-bottom: 1px solid var(--border);
   }
+  .step:first-child { border-top: 1px solid var(--border); }
 
-  .result-title { font-family: var(--display); font-size: 28px; letter-spacing: 2px; }
+  .step-num {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 40px;
+  }
 
-  .status-badge {
+  .step-content {}
+  .step-title {
     font-family: var(--mono);
     font-size: 12px;
-    letter-spacing: 3px;
-    padding: 8px 20px;
-    font-weight: 500;
-  }
-
-  .status-badge.fail { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
-  .status-badge.pass { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
-
-  .meta-row { display: flex; gap: 32px; margin-bottom: 32px; flex-wrap: wrap; }
-
-  .meta-item { font-family: var(--mono); font-size: 11px; }
-  .meta-item .key { color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
-  .meta-item .val { color: var(--text); font-size: 13px; }
-
-  .divider-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .divider-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  .violation {
-    border: 1px solid var(--border);
-    padding: 20px 24px;
-    margin-bottom: 12px;
-    transition: border-color 0.2s;
-  }
-
-  .violation:hover { border-color: var(--red); }
-  .violation.critical { border-left: 3px solid var(--red); }
-  .violation.warning { border-left: 3px solid #ff9500; }
-
-  .violation-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-
-  .severity-tag {
-    font-family: var(--mono);
-    font-size: 9px;
     letter-spacing: 2px;
-    padding: 3px 10px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .step-desc { font-size: 13px; color: #666; line-height: 1.6; }
+
+  /* ── TECH STACK ── */
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s 0.3s ease both;
   }
 
-  .severity-tag.critical { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
-  .severity-tag.warning { background: rgba(255,149,0,0.1); color: #ff9500; border: 1px solid #ff9500; }
+  .stack-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .stack-pill:hover { border-color: var(--accent); color: var(--accent); }
 
-  .category { font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--text); }
-  .violation-desc { font-size: 13px; color: #888; line-height: 1.6; }
+  /* ── COMPLIANCE CHECKS ── */
+  .checks {
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s 0.35s ease both;
+  }
 
-  .summary-box { background: var(--surface); border: 1px solid var(--border); padding: 24px; margin-top: 32px; }
-  .summary-box p { font-size: 14px; color: #888; line-height: 1.7; }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: #777;
+  }
+  .check-item:first-child { border-top: 1px solid var(--border); }
 
-  .no-violations { text-align: center; padding: 40px; border: 1px dashed var(--border); margin-bottom: 12px; }
-  .no-violations .check { font-size: 32px; margin-bottom: 8px; }
-  .no-violations p { font-family: var(--mono); font-size: 12px; color: var(--green); letter-spacing: 2px; }
+  .check-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .check-dot.red { background: var(--red); }
 
+  /* ── FOOTER ── */
   footer {
-    margin-top: 80px;
     padding-top: 24px;
     border-top: 1px solid var(--border);
     display: flex;
@@ -374,303 +254,137 @@
     font-family: var(--mono);
     font-size: 11px;
     color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px);  } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
 
 <div class="container">
 
+  <!-- HEADER -->
   <header>
-    <div class="tag">Compliance Audit System</div>
+    <div class="tag">AI-Powered Compliance System</div>
     <h1>BRAND<br><span>GUARDIAN</span></h1>
-    <p class="subtitle">// AI-powered video compliance auditing via LangGraph + Azure</p>
+    <p class="subtitle">
+      Automatically audit YouTube ad videos against brand compliance rules
+      using LangGraph orchestration, Azure Video Indexer, and GPT-4o —
+      in seconds, not hours.
+    </p>
   </header>
 
-  <!-- Mode Toggle -->
-  <div class="mode-toggle">
-    <button class="mode-btn active" onclick="setMode(1)">Option 1 — Auto Download</button>
-    <button class="mode-btn" onclick="setMode(2)">Option 2 — Manual Upload</button>
+  <!-- LAUNCH BUTTON -->
+  <div class="launch-wrap">
+    <a class="launch-btn" href="/app">
+      LAUNCH AUDIT TOOL <span class="arrow">&#8594;</span>
+    </a>
+    <p class="launch-hint">// Submit a YouTube URL or upload a video file to begin</p>
   </div>
 
-  <!-- OPTION 1: URL only -->
-  <div class="input-section section-opt1" id="panel1">
-    <div class="field">
-      <label>YouTube Video URL</label>
-      <div class="input-row">
-        <input type="url" id="urlOpt1" placeholder="https://youtu.be/..." />
-        <button class="audit-btn" onclick="runAudit()">AUDIT</button>
-      </div>
+  <br><br>
+
+  <!-- FEATURES -->
+  <div class="section-label">What It Does</div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">&#127916;</div>
+      <div class="feature-title">Video Intelligence</div>
+      <div class="feature-desc">Extracts full speech transcript and on-screen text (OCR) from any YouTube ad via Azure Video Indexer.</div>
     </div>
-    <p class="hint">yt-dlp downloads the video automatically. Works locally; may be blocked on cloud.</p>
-  </div>
-
-  <!-- OPTION 2: URL + file upload -->
-  <div class="input-section section-opt2" id="panel2" style="display:none;">
-    <div class="field">
-      <label>YouTube Video URL (for metadata only)</label>
-      <input type="url" id="urlOpt2" placeholder="https://youtu.be/..." />
+    <div class="feature">
+      <div class="feature-icon">&#128269;</div>
+      <div class="feature-title">RAG Compliance Check</div>
+      <div class="feature-desc">Retrieves the most relevant brand rules from a vector knowledge base and audits content against them.</div>
     </div>
-    <div class="field">
-      <label>Upload Video File</label>
-      <div class="file-drop" id="fileDrop">
-        <input type="file" id="videoFile" accept="video/*" onchange="onFileChange(this)" />
-        <div class="file-drop-icon">&#8679;</div>
-        <div class="file-drop-text">Drop your <span>.mp4 / .mov / .avi</span> here or click to browse</div>
-        <div class="file-name" id="fileName"></div>
-      </div>
-      <p class="hint">Cloud-safe: YouTube URL is only used to pull metadata (title, duration). Video is uploaded directly.</p>
+    <div class="feature">
+      <div class="feature-icon">&#9889;</div>
+      <div class="feature-title">Instant Report</div>
+      <div class="feature-desc">GPT-4o generates a structured violation report with severity levels — CRITICAL or WARNING — and a plain-English summary.</div>
     </div>
-    <button class="audit-btn" onclick="runAudit()">AUDIT</button>
-  </div>
-
-  <div class="status-bar" id="statusBar">
-    <div class="spinner"></div>
-    <span id="statusText">Initializing audit session...</span>
-  </div>
-
-  <div class="error-box" id="errorBox"></div>
-
-  <div id="results">
-    <div class="result-header">
-      <div class="result-title">AUDIT REPORT</div>
-      <div class="status-badge" id="statusBadge">—</div>
-    </div>
-
-    <div class="meta-row">
-      <div class="meta-item">
-        <div class="key">Session ID</div>
-        <div class="val" id="metaSession">—</div>
-      </div>
-      <div class="meta-item">
-        <div class="key">Video ID</div>
-        <div class="val" id="metaVideo">—</div>
-      </div>
-      <div class="meta-item">
-        <div class="key">Mode</div>
-        <div class="val" id="metaMode">—</div>
-      </div>
-      <div class="meta-item">
-        <div class="key">Violations</div>
-        <div class="val" id="metaCount">—</div>
-      </div>
-    </div>
-
-    <div class="divider-label">Violations Detected</div>
-    <div id="violationsList"></div>
-
-    <div class="summary-box">
-      <div class="divider-label" style="margin-bottom:12px;">Final Summary</div>
-      <p id="summaryText"></p>
+    <div class="feature">
+      <div class="feature-icon">&#9729;</div>
+      <div class="feature-title">Cloud-Safe Upload</div>
+      <div class="feature-desc">Option 2 lets you upload the video file directly, bypassing YouTube download restrictions on cloud environments.</div>
     </div>
   </div>
 
+  <!-- HOW IT WORKS -->
+  <div class="section-label">How It Works</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <div class="step-title">Submit Video</div>
+        <div class="step-desc">Paste a YouTube URL (auto-download) or upload your video file manually with title and description.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <div class="step-title">Azure Processes</div>
+        <div class="step-desc">Azure Video Indexer extracts the full transcript and all on-screen text (OCR) from the video.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <div class="step-title">RAG Retrieval</div>
+        <div class="step-desc">The system queries a vector store of brand compliance rules and retrieves the most relevant policies for the content.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <div class="step-title">GPT-4o Audit</div>
+        <div class="step-desc">GPT-4o cross-references the transcript and OCR against retrieved rules and returns a structured JSON violation report.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-content">
+        <div class="step-title">Results Delivered</div>
+        <div class="step-desc">Violations are displayed by category and severity with a plain-English summary — PASS or FAIL verdict.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLIANCE CHECKS -->
+  <div class="section-label">Compliance Categories Checked</div>
+  <div class="checks">
+    <div class="check-item"><div class="check-dot red"></div>Misleading or absolute claims ("guaranteed", "100% safe")</div>
+    <div class="check-item"><div class="check-dot red"></div>Missing required disclosures (FTC, ASA, platform-specific)</div>
+    <div class="check-item"><div class="check-dot red"></div>Prohibited product or service claims</div>
+    <div class="check-item"><div class="check-dot"></div>Video description length (recommended: &le;35 chars/line, 2 lines)</div>
+    <div class="check-item"><div class="check-dot"></div>On-screen text legibility and duration</div>
+    <div class="check-item"><div class="check-dot"></div>Brand tone and language guidelines</div>
+  </div>
+
+  <!-- TECH STACK -->
+  <div class="section-label">Tech Stack</div>
+  <div class="stack">
+    <div class="stack-pill">LangGraph</div>
+    <div class="stack-pill">GPT-4o</div>
+    <div class="stack-pill">Azure Video Indexer</div>
+    <div class="stack-pill">Azure AI Search</div>
+    <div class="stack-pill">FastAPI</div>
+    <div class="stack-pill">OpenAI Embeddings</div>
+    <div class="stack-pill">Azure Monitor</div>
+    <div class="stack-pill">LangSmith</div>
+    <div class="stack-pill">Docker</div>
+    <div class="stack-pill">GitHub Actions</div>
+  </div>
+
+  <!-- FOOTER -->
   <footer>
     <span>Brand Guardian AI &copy; 2026</span>
-    <span>LangGraph &middot; Azure Video Indexer &middot; OpenAI</span>
+    <span>LangGraph &middot; Azure Video Indexer &middot; OpenAI GPT-4o</span>
   </footer>
 
 </div>
-
-<script>
-  const API_BASE = 'http://localhost:8000';
-  let currentMode = 1;
-
-  function setMode(m) {
-    currentMode = m;
-    document.querySelectorAll('.mode-btn').forEach((b, i) => {
-      b.classList.toggle('active', i + 1 === m);
-    });
-    document.getElementById('panel1').style.display = m === 1 ? 'block' : 'none';
-    document.getElementById('panel2').style.display = m === 2 ? 'block' : 'none';
-    reset();
-  }
-
-  function onFileChange(input) {
-    const nameEl = document.getElementById('fileName');
-    if (input.files.length) {
-      nameEl.textContent = '✓ ' + input.files[0].name;
-      nameEl.style.display = 'block';
-    } else {
-      nameEl.style.display = 'none';
-    }
-  }
-
-  // Drag-over highlight
-  const drop = document.getElementById('fileDrop');
-  drop.addEventListener('dragover', () => drop.classList.add('drag-over'));
-  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
-  drop.addEventListener('drop', () => drop.classList.remove('drag-over'));
-
-  function setStatus(msg) {
-    document.getElementById('statusText').textContent = msg;
-  }
-
-  // Step-by-step rotating messages
-  const STEPS_OPT1 = [
-    '[1/5] Connecting to Brand Guardian API...',
-    '[2/5] Downloading video via yt-dlp...',
-    '[3/5] Uploading video to Azure Video Indexer...',
-    '[4/5] Azure is processing — extracting transcript & OCR...',
-    '[4/5] Still processing (this can take a few minutes)...',
-    '[4/5] Almost there — waiting for Azure to finish...',
-    '[5/5] Running compliance audit with GPT-4o...',
-  ];
-
-  const STEPS_OPT2 = [
-    '[1/5] Connecting to Brand Guardian API...',
-    '[2/5] Uploading your video file to server...',
-    '[3/5] Uploading video to Azure Video Indexer...',
-    '[4/5] Azure is processing — extracting transcript & OCR...',
-    '[4/5] Still processing (this can take a few minutes)...',
-    '[4/5] Almost there — waiting for Azure to finish...',
-    '[5/5] Running compliance audit with GPT-4o...',
-  ];
-
-  let stepTimer = null;
-
-  function startStepMessages(steps) {
-    let i = 0;
-    setStatus(steps[i]);
-    stepTimer = setInterval(() => {
-      i = Math.min(i + 1, steps.length - 1);
-      setStatus(steps[i]);
-    }, 18000); // advance every 18 seconds
-  }
-
-  function stopStepMessages() {
-    if (stepTimer) { clearInterval(stepTimer); stepTimer = null; }
-  }
-
-  function reset() {
-    stopStepMessages();
-    document.getElementById('results').classList.remove('show');
-    document.getElementById('errorBox').classList.remove('show');
-    document.getElementById('statusBar').classList.remove('show');
-  }
-
-  async function runAudit() {
-    reset();
-
-    let url, response;
-
-    if (currentMode === 1) {
-      url = document.getElementById('urlOpt1').value.trim();
-      if (!url) { showError('Please enter a YouTube URL.'); return; }
-
-      document.getElementById('statusBar').classList.add('show');
-      startStepMessages(STEPS_OPT1);
-      disableButtons(true);
-
-      try {
-        response = await fetch(`${API_BASE}/audit`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ video_url: url })
-        });
-      } catch (e) {
-        showError('Cannot reach server at ' + API_BASE + '. Is it running?');
-        disableButtons(false);
-        return;
-      }
-
-    } else {
-      url = document.getElementById('urlOpt2').value.trim();
-      const fileInput = document.getElementById('videoFile');
-
-      if (!url) { showError('Please enter a YouTube URL for metadata.'); return; }
-      if (!fileInput.files.length) { showError('Please select a video file to upload.'); return; }
-
-      document.getElementById('statusBar').classList.add('show');
-      startStepMessages(STEPS_OPT2);
-      disableButtons(true);
-
-      const form = new FormData();
-      form.append('video_url', url);
-      form.append('video_file', fileInput.files[0]);
-
-      try {
-        response = await fetch(`${API_BASE}/audit-upload`, {
-          method: 'POST',
-          body: form
-        });
-      } catch (e) {
-        showError('Cannot reach server at ' + API_BASE + '. Is it running?');
-        disableButtons(false);
-        return;
-      }
-    }
-
-    stopStepMessages();
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      showError(err.detail || 'API request failed');
-      disableButtons(false);
-      return;
-    }
-
-    setStatus('✓ Audit complete. Rendering results...');
-    const data = await response.json();
-    setTimeout(() => renderResults(data), 400);
-  }
-
-  function renderResults(data) {
-    document.getElementById('statusBar').classList.remove('show');
-
-    document.getElementById('metaSession').textContent = data.session_id;
-    document.getElementById('metaVideo').textContent = data.video_id;
-    document.getElementById('metaMode').textContent = currentMode === 1 ? 'Auto Download' : 'Manual Upload';
-    document.getElementById('metaCount').textContent = data.compliance_results.length;
-    document.getElementById('summaryText').textContent = data.final_report;
-
-    const badge = document.getElementById('statusBadge');
-    badge.textContent = data.status;
-    badge.className = 'status-badge ' + (data.status === 'PASS' ? 'pass' : 'fail');
-
-    const list = document.getElementById('violationsList');
-    list.innerHTML = '';
-
-    if (data.compliance_results.length === 0) {
-      list.innerHTML = `<div class="no-violations"><div class="check">✓</div><p>NO VIOLATIONS DETECTED</p></div>`;
-    } else {
-      data.compliance_results.forEach(issue => {
-        const sev = (issue.severity || '').toLowerCase();
-        list.innerHTML += `
-          <div class="violation ${sev}">
-            <div class="violation-top">
-              <span class="severity-tag ${sev}">${issue.severity}</span>
-              <span class="category">${issue.category}</span>
-            </div>
-            <p class="violation-desc">${issue.description}</p>
-          </div>`;
-      });
-    }
-
-    document.getElementById('results').classList.add('show');
-    disableButtons(false);
-  }
-
-  function showError(msg) {
-    stopStepMessages();
-    document.getElementById('statusBar').classList.remove('show');
-    const box = document.getElementById('errorBox');
-    box.textContent = '⚠ ' + msg;
-    box.classList.add('show');
-  }
-
-  function disableButtons(state) {
-    document.querySelectorAll('.audit-btn').forEach(b => b.disabled = state);
-  }
-
-  // Enter key on URL fields
-  document.getElementById('urlOpt1').addEventListener('keydown', e => { if (e.key === 'Enter') runAudit(); });
-  document.getElementById('urlOpt2').addEventListener('keydown', e => { if (e.key === 'Enter') runAudit(); });
-</script>
 
 </body>
 </html>

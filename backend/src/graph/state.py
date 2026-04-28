@@ -19,6 +19,8 @@ class VideoAuditState(TypedDict):
     video_id: str
     # When set, skip yt-dlp download and use this pre-uploaded file instead (Option 2)
     video_file_path: Optional[str]
+    video_title: Optional[str]
+    video_description: Optional[str]
 
     # --- Ingestion & Extraction Data ---
     # Optional because they are populated asynchronously by the Indexer Node.
