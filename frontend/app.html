@@ -684,7 +684,7 @@
   async function runAudit() {
     reset();
 
-    let url, response;
+    let url, jobRes;
 
     if (currentMode === 1) {
       url = document.getElementById('urlOpt1').value.trim();
@@ -695,7 +695,7 @@
       disableButtons(true);
 
       try {
-        response = await fetch(`${API_BASE}/audit`, {
+        jobRes = await fetch(`${API_BASE}/audit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ video_url: url })
@@ -724,7 +724,7 @@
       form.append('video_file', fileInput.files[0]);
 
       try {
-        response = await fetch(`${API_BASE}/audit-upload`, {
+        jobRes = await fetch(`${API_BASE}/audit-upload`, {
           method: 'POST',
           body: form
         });
@@ -735,18 +735,53 @@
       }
     }
 
-    stopStepMessages();
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      showError(err.detail || 'API request failed');
+    if (!jobRes.ok) {
+      const err = await jobRes.json().catch(() => ({ detail: 'Unknown error' }));
+      showError(err.detail || 'Failed to start audit job.');
       disableButtons(false);
       return;
     }
 
-    setStatus('✓ Audit complete. Rendering results...');
-    const data = await response.json();
-    setTimeout(() => renderResults(data), 400);
+    const { job_id } = await jobRes.json();
+    await pollJobStatus(job_id);
+  }
+
+  async function pollJobStatus(job_id) {
+    const POLL_INTERVAL = 10000; // 10 seconds
+    while (true) {
+      await new Promise(r => setTimeout(r, POLL_INTERVAL));
+      let res;
+      try {
+        res = await fetch(`${API_BASE}/status/${job_id}`);
+      } catch (e) {
+        showError('Lost connection to server while polling.');
+        disableButtons(false);
+        return;
+      }
+
+      if (!res.ok) {
+        showError('Failed to check job status.');
+        disableButtons(false);
+        return;
+      }
+
+      const job = await res.json();
+
+      if (job.status === 'complete') {
+        stopStepMessages();
+        setStatus('✓ Audit complete. Rendering results...');
+        setTimeout(() => renderResults(job.result), 400);
+        return;
+      }
+
+      if (job.status === 'failed') {
+        stopStepMessages();
+        showError(job.error || 'Audit job failed.');
+        disableButtons(false);
+        return;
+      }
+      // still pending — loop continues
+    }
   }
 
   function renderResults(data) {

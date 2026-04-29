@@ -7,9 +7,12 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
 from backend.src.services.rule_indexer import clear_rules, index_pdf_files
+
+# In-memory job store: { job_id: { status, result, error } }
+jobs: Dict[str, Any] = {}
 
 
 # ========== STEP 1: LOAD ENVIRONMENT VARIABLES ==========
@@ -146,142 +149,98 @@ class AuditResponse(BaseModel):
     compliance_results: List[ComplianceIssue] # List of violations (can be empty)
 
 
-# ========== STEP 7: DEFINE MAIN ENDPOINT ==========
-@app.post("/audit", response_model=AuditResponse)
-# ↑ @app.post = Decorator that registers this function as a POST endpoint
-# ↑ "/audit" = URL path (http://localhost:8000/audit)
-# ↑ response_model = Tells FastAPI to validate response matches AuditResponse
+# ========== BACKGROUND WORKER ==========
 
-async def audit_video(request: AuditRequest):
-    """
-    Main API endpoint that triggers the compliance audit workflow.
-    
-    HTTP Method: POST
-    URL: http://localhost:8000/audit
-    
-    Request Body:
-    {
-        "video_url": "https://youtu.be/abc123"
-    }
-    
-    Response: AuditResponse object (defined above)
-    
-    Process:
-    1. Generate unique session ID
-    2. Prepare input for LangGraph workflow
-    3. Invoke the graph (Indexer → Auditor)
-    4. Return formatted results
-    """
-    
-    # ========== GENERATE SESSION ID ==========
-    session_id = str(uuid.uuid4())  
-    # Creates unique ID like: "ce6c43bb-c71a-4f16-a377-8b493502fee2"
-    
-    video_id_short = f"vid_{session_id[:8]}"  
-    # Takes first 8 characters: "vid_ce6c43bb"
-    # Easier to reference in logs/UI than full UUID
-    
-    # ========== LOG INCOMING REQUEST ==========
-    logger.info(f"Received Audit Request: {request.video_url} (Session: {session_id})")
-    # Example output: "Received Audit Request: https://youtu.be/abc (Session: ce6c43bb...)"
-
-    # ========== PREPARE GRAPH INPUT ==========
-    initial_inputs = {
-        "video_url": request.video_url,  # From the API request
-        "video_id": video_id_short,      # Generated ID
-        "compliance_results": [],        # Will be populated by Auditor
-        "errors": []                     # Tracks any processing errors
-    }
-
+def _run_audit_job(job_id: str, initial_inputs: dict, tmp_path: str = None):
+    """Runs the compliance graph in a background thread and stores the result."""
     try:
-        # ========== INVOKE LANGGRAPH WORKFLOW ==========
-        # This is the SAME logic from main.py - just wrapped in an API
         final_state = compliance_graph.invoke(initial_inputs)
-        # ↑ Blocking call - waits for entire workflow to complete
-        # ↑ Flow: START → Indexer → Auditor → END
-        # ↑ Returns: Final state dictionary with all results
-        
-        # NOTE: In production, you'd use:
-        # await compliance_graph.ainvoke(initial_inputs)
-        # ↑ Async version - doesn't block the server while processing
-        
-        # ========== MAP GRAPH OUTPUT TO API RESPONSE ==========
-        return AuditResponse(
-            session_id=session_id,
-            video_id=final_state.get("video_id"),  
-            # .get() safely retrieves value (None if missing)
-            
-            status=final_state.get("final_status", "UNKNOWN"),  
-            # Defaults to "UNKNOWN" if key doesn't exist
-            
-            final_report=final_state.get("final_report", "No report generated."),
-            
-            compliance_results=final_state.get("compliance_results", [])
-            # Returns empty list [] if no violations
-        )
-        # FastAPI automatically converts this Pydantic object to JSON
-
+        jobs[job_id] = {
+            "status": "complete",
+            "result": {
+                "session_id": job_id,
+                "video_id": final_state.get("video_id", ""),
+                "status": final_state.get("final_status", "UNKNOWN"),
+                "final_report": final_state.get("final_report", "No report generated."),
+                "compliance_results": final_state.get("compliance_results", []),
+            }
+        }
     except Exception as e:
-        # ========== ERROR HANDLING ==========
-        logger.error(f"Audit Failed: {str(e)}")  
-        # Log the error for debugging
-        
-        raise HTTPException(
-            status_code=500,  # 500 = Internal Server Error
-            detail=f"Workflow Execution Failed: {str(e)}"
-            # Returns this error message to the client
-        )
-        # Example error response:
-        # {
-        #     "detail": "Workflow Execution Failed: YouTube download error"
-        # }
+        logger.error(f"Job {job_id} failed: {str(e)}")
+        jobs[job_id] = {"status": "failed", "error": str(e)}
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
-# ========== OPTION 2: AUDIT WITH MANUAL VIDEO UPLOAD ==========
-# Use this when running on cloud where YouTube blocks yt-dlp downloads.
-# The client uploads the video file directly; the URL is used only for metadata.
-@app.post("/audit-upload", response_model=AuditResponse)
+# ========== STEP 7: SUBMIT AUDIT (ASYNC) ==========
+
+@app.post("/audit")
+async def audit_video(request: AuditRequest):
+    """Starts an async audit job and returns a job_id immediately."""
+    import asyncio
+    job_id = str(uuid.uuid4())
+    video_id_short = f"vid_{job_id[:8]}"
+    logger.info(f"Received Audit Request: {request.video_url} (Job: {job_id})")
+
+    initial_inputs = {
+        "video_url": request.video_url,
+        "video_id": video_id_short,
+        "compliance_results": [],
+        "errors": []
+    }
+
+    jobs[job_id] = {"status": "pending"}
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _run_audit_job, job_id, initial_inputs, None)
+    return {"job_id": job_id}
+
+
+# ========== OPTION 2: SUBMIT UPLOAD AUDIT (ASYNC) ==========
+
+@app.post("/audit-upload")
 async def audit_video_with_upload(
     video_url: str = Form(...),
     video_title: str = Form(""),
     video_description: str = Form(""),
     video_file: UploadFile = File(...),
 ):
-    session_id = str(uuid.uuid4())
-    video_id_short = f"vid_{session_id[:8]}"
-    logger.info(f"[Option 2] Upload audit: {video_url} (Session: {session_id})")
+    """Saves uploaded video, starts async audit job, returns job_id immediately."""
+    import asyncio
+    job_id = str(uuid.uuid4())
+    video_id_short = f"vid_{job_id[:8]}"
+    logger.info(f"[Option 2] Upload audit: {video_url} (Job: {job_id})")
 
     suffix = "." + (video_file.filename.rsplit(".", 1)[-1] if "." in video_file.filename else "mp4")
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    try:
-        shutil.copyfileobj(video_file.file, tmp)
-        tmp.close()
+    shutil.copyfileobj(video_file.file, tmp)
+    tmp.close()
 
-        initial_inputs = {
-            "video_url": video_url,
-            "video_id": video_id_short,
-            "video_file_path": tmp.name,
-            "video_title": video_title,
-            "video_description": video_description,
-            "compliance_results": [],
-            "errors": [],
-        }
+    initial_inputs = {
+        "video_url": video_url,
+        "video_id": video_id_short,
+        "video_file_path": tmp.name,
+        "video_title": video_title,
+        "video_description": video_description,
+        "compliance_results": [],
+        "errors": [],
+    }
 
-        final_state = compliance_graph.invoke(initial_inputs)
+    jobs[job_id] = {"status": "pending"}
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _run_audit_job, job_id, initial_inputs, tmp.name)
+    return {"job_id": job_id}
 
-        return AuditResponse(
-            session_id=session_id,
-            video_id=final_state.get("video_id"),
-            status=final_state.get("final_status", "UNKNOWN"),
-            final_report=final_state.get("final_report", "No report generated."),
-            compliance_results=final_state.get("compliance_results", []),
-        )
-    except Exception as e:
-        logger.error(f"Upload Audit Failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Workflow Execution Failed: {str(e)}")
-    finally:
-        if os.path.exists(tmp.name):
-            os.remove(tmp.name)
+
+# ========== JOB STATUS ENDPOINT ==========
+
+@app.get("/status/{job_id}")
+def get_job_status(job_id: str):
+    """Poll this endpoint to check audit progress and retrieve results."""
+    job = jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    return job
 
 
 # ========== RULE MANAGEMENT ENDPOINTS ==========
