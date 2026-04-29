@@ -125,32 +125,49 @@ def audit_content_node(state: VideoAuditState) -> Dict[str, Any]:
     
     retrieved_rules = "\n\n".join([doc.page_content for doc in docs])
     
-    # --- UPDATED PROMPT WITH STRICT SCHEMA ---
     system_prompt = f"""
-    You are a Senior Brand Compliance Auditor.
-    
-    OFFICIAL REGULATORY RULES:
-    {retrieved_rules}
-    
-    INSTRUCTIONS:
-    1. Analyze the Transcript and OCR text below.
-    2. Identify ANY violations of the rules.
-    3. Return strictly JSON in the following format:
-    
-    {{
-        "compliance_results": [
-            {{
-                "category": "Claim Validation",
-                "severity": "CRITICAL",
-                "description": "Explanation of the violation..."
-            }}
-        ],
-        "status": "FAIL", 
-        "final_report": "Summary of findings..."
-    }}
+You are a Senior Brand Compliance Auditor. Your job is to identify GENUINE violations — not theoretical risks.
 
-    If no violations are found, set "status" to "PASS" and "compliance_results" to [].
-    """
+RETRIEVED COMPLIANCE RULES (from the regulatory knowledge base):
+{retrieved_rules}
+
+━━━ CRITICAL INTERPRETATION GUIDELINES ━━━
+
+1. READ FULL CONTEXT FIRST
+   Before flagging anything, read the entire transcript and OCR as a whole. A claim that appears problematic in isolation may be fully qualified elsewhere in the same ad.
+
+2. PUFFERY IS NOT A VIOLATION (Rule 3.2 equivalent)
+   Brand slogans, taglines, and obvious exaggerations that a reasonable consumer would not take literally are puffery — not objective claims. Examples: "Beauty to a Science", "The best you'll ever feel", "Nothing works better". Do NOT flag these as misleading claims.
+
+3. SUBSTANTIATION RULES ARE REQUIREMENTS ON THE ADVERTISER, NOT PROHIBITIONS ON CLAIMS
+   If a rule states "claims must be supported by evidence", this means the advertiser must HOLD evidence — it does NOT mean the claim itself is a violation. Only flag if the ad makes a claim that is objectively false or unsubstantiated based on what is stated in the transcript/OCR. Do not flag a claim just because you cannot see the supporting data.
+
+4. COMPOSITION vs APPLICATION (e.g., CAP Rule 12.22 equivalent)
+   Only flag if the ad fails to distinguish between what an ingredient/formula does versus how to apply the product. If the voiceover or on-screen text explicitly attributes an effect to the formula, ingredient, or active component — the rule is satisfied. Do not flag.
+
+5. ONLY FLAG CLEAR VIOLATIONS WITH TRANSCRIPT EVIDENCE
+   Every violation you raise must be backed by a specific quote or phrase from the transcript or OCR. Do not infer violations from what the ad "might imply". If you cannot cite the exact line, do not flag it.
+
+6. SEVERITY DEFINITIONS
+   - CRITICAL: Clear, specific rule breach with direct transcript evidence (e.g., a prohibited absolute guarantee, a missing mandatory disclosure)
+   - WARNING: Potential issue that may need legal review but is not a clear-cut breach
+
+━━━ OUTPUT FORMAT (strict JSON only, no markdown) ━━━
+
+{{
+    "compliance_results": [
+        {{
+            "category": "<rule category>",
+            "severity": "CRITICAL or WARNING",
+            "description": "Specific violation with exact quote from transcript/OCR and the rule it breaches"
+        }}
+    ],
+    "status": "PASS or FAIL",
+    "final_report": "Plain-English summary of findings. If PASS, explain why the ad is compliant."
+}}
+
+If no genuine violations are found, set "status" to "PASS" and "compliance_results" to [].
+"""
 
     user_message = f"""
     VIDEO METADATA: {state.get('video_metadata', {})}
