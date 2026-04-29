@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.middleware.cors import CORSMiddleware
+from backend.src.services.rule_indexer import clear_rules, index_pdf_files
 
 
 # ========== STEP 1: LOAD ENVIRONMENT VARIABLES ==========
@@ -281,6 +282,55 @@ async def audit_video_with_upload(
     finally:
         if os.path.exists(tmp.name):
             os.remove(tmp.name)
+
+
+# ========== RULE MANAGEMENT ENDPOINTS ==========
+
+@app.post("/upload-rules")
+async def upload_rules(
+    files: List[UploadFile] = File(...),
+    clear_first: bool = Form(False),
+):
+    """Upload PDF compliance rule files and index them into Azure AI Search."""
+    tmp_paths = []
+    try:
+        for f in files:
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            shutil.copyfileobj(f.file, tmp)
+            tmp.close()
+            tmp_paths.append(tmp.name)
+
+        cleared = 0
+        if clear_first:
+            result = clear_rules()
+            cleared = result.get("deleted", 0)
+            logger.info(f"Cleared {cleared} existing rule chunks.")
+
+        result = index_pdf_files(tmp_paths)
+        return {
+            "status": "success",
+            "cleared_chunks": cleared,
+            "files_processed": result["files_processed"],
+            "chunks_indexed": result["chunks_indexed"]
+        }
+    except Exception as e:
+        logger.error(f"Rule upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        for path in tmp_paths:
+            if os.path.exists(path):
+                os.remove(path)
+
+
+@app.post("/clear-rules")
+def clear_all_rules():
+    """Delete all compliance rule documents from Azure AI Search index."""
+    try:
+        result = clear_rules()
+        return {"status": "success", "deleted_chunks": result["deleted"]}
+    except Exception as e:
+        logger.error(f"Clear rules failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ========== STEP 8: HEALTH CHECK ENDPOINT ==========

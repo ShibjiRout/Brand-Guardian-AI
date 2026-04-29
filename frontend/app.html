@@ -376,6 +376,97 @@
     color: var(--muted);
   }
 
+  /* Rules panel */
+  .rules-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .rules-panel::before {
+    content: 'STEP 1 — COMPLIANCE RULES';
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background: var(--surface);
+    padding: 0 8px;
+    position: absolute;
+    top: -1px;
+    right: 32px;
+    transform: translateY(-50%);
+  }
+
+  .step-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .rules-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+
+  button.clear-btn {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  button.clear-btn:hover:not(:disabled) { background: var(--red-dim); }
+  button.clear-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .rules-status {
+    display: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    border: 1px solid var(--border);
+  }
+  .rules-status.show { display: block; }
+  .rules-status.ok { color: var(--green); border-color: var(--green); background: var(--green-dim); }
+  .rules-status.err { color: var(--red); border-color: var(--red); background: var(--red-dim); }
+  .rules-status.loading { color: var(--accent); border-color: rgba(232,255,0,0.2); background: var(--accent-dim); }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .checkbox-row input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
+  .audit-step-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .audit-step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -390,6 +481,35 @@
     <h1>BRAND<br><span>GUARDIAN</span></h1>
     <p class="subtitle">// AI-powered video compliance auditing via LangGraph + Azure</p>
   </header>
+
+  <!-- STEP 1: COMPLIANCE RULES -->
+  <div class="rules-panel">
+    <div class="field">
+      <label>Upload Compliance Rule PDFs</label>
+      <div class="file-drop" id="rulesDrop">
+        <input type="file" id="rulesFiles" accept=".pdf" multiple onchange="onRulesChange(this)" />
+        <div class="file-drop-icon">&#128196;</div>
+        <div class="file-drop-text">Drop <span>.pdf</span> rule files here or click to browse</div>
+        <div class="file-name" id="rulesNames"></div>
+      </div>
+      <p class="hint">Upload one or more brand compliance rule PDFs. They will be chunked, embedded, and indexed into Azure AI Search.</p>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="clearFirst" />
+      Clear existing rules before uploading (full replacement)
+    </label>
+
+    <div class="rules-actions">
+      <button class="audit-btn" onclick="uploadRules()">INDEX RULES</button>
+      <button class="clear-btn" onclick="clearRules()">CLEAR ALL RULES</button>
+    </div>
+
+    <div class="rules-status" id="rulesStatus"></div>
+  </div>
+
+  <!-- STEP 2: AUDIT VIDEO -->
+  <div class="audit-step-label">STEP 2 — AUDIT VIDEO</div>
 
   <!-- Mode Toggle -->
   <div class="mode-toggle">
@@ -680,6 +800,69 @@
   // Enter key on URL fields
   document.getElementById('urlOpt1').addEventListener('keydown', e => { if (e.key === 'Enter') runAudit(); });
   document.getElementById('urlOpt2').addEventListener('keydown', e => { if (e.key === 'Enter') runAudit(); });
+
+  // ── RULES PANEL ──
+  function onRulesChange(input) {
+    const el = document.getElementById('rulesNames');
+    if (input.files.length) {
+      el.textContent = '✓ ' + Array.from(input.files).map(f => f.name).join(', ');
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  function setRulesStatus(msg, type) {
+    const el = document.getElementById('rulesStatus');
+    el.textContent = msg;
+    el.className = 'rules-status show ' + type;
+  }
+
+  async function uploadRules() {
+    const fileInput = document.getElementById('rulesFiles');
+    if (!fileInput.files.length) {
+      setRulesStatus('⚠ Please select at least one PDF file.', 'err');
+      return;
+    }
+
+    const clearFirst = document.getElementById('clearFirst').checked;
+    const form = new FormData();
+    Array.from(fileInput.files).forEach(f => form.append('files', f));
+    form.append('clear_first', clearFirst);
+
+    setRulesStatus('Uploading and indexing rules...', 'loading');
+    document.querySelectorAll('.audit-btn, .clear-btn').forEach(b => b.disabled = true);
+
+    try {
+      const res = await fetch(`${API_BASE}/upload-rules`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+      let msg = `✓ Indexed ${data.chunks_indexed} chunks from ${data.files_processed} file(s).`;
+      if (data.cleared_chunks > 0) msg += ` Cleared ${data.cleared_chunks} old chunks first.`;
+      setRulesStatus(msg, 'ok');
+    } catch (e) {
+      setRulesStatus('✗ ' + e.message, 'err');
+    } finally {
+      document.querySelectorAll('.audit-btn, .clear-btn').forEach(b => b.disabled = false);
+    }
+  }
+
+  async function clearRules() {
+    if (!confirm('Clear ALL compliance rules from the index?')) return;
+    setRulesStatus('Clearing all rules...', 'loading');
+    document.querySelectorAll('.audit-btn, .clear-btn').forEach(b => b.disabled = true);
+    try {
+      const res = await fetch(`${API_BASE}/clear-rules`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Clear failed');
+      setRulesStatus(`✓ Cleared ${data.deleted_chunks} rule chunks from index.`, 'ok');
+    } catch (e) {
+      setRulesStatus('✗ ' + e.message, 'err');
+    } finally {
+      document.querySelectorAll('.audit-btn, .clear-btn').forEach(b => b.disabled = false);
+    }
+  }
 </script>
 
 </body>
