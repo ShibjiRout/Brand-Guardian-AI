@@ -23,8 +23,12 @@
         ↓
 [GPT-4o Compliance Auditor] → [Structured Violation Report]
         ↓
-[FastAPI Backend + Async Job Polling] → [HTML Frontend]
+[FastAPI Backend + Async Job Polling] ← [Static Frontend, served separately]
 ```
+
+The API (`backend/`) and the frontend (`web/`) are decoupled — the API is a
+pure JSON service with no HTML routes; the frontend is a separate static
+site that calls it over HTTP.
 
 ### Core Components
 
@@ -124,7 +128,7 @@ AZURE_CLIENT_SECRET="your-client-secret"
 
 ### Index Compliance Rules (PDF Upload)
 
-Use the web UI **Step 1 panel** to upload compliance PDFs (e.g. CAP Code, FTC guidelines) directly into Azure AI Search. No manual scripts needed.
+Use the audit tool's **Step 1 panel** (`web/app.html`) to upload compliance PDFs (e.g. CAP Code, FTC guidelines) directly into Azure AI Search. No manual scripts needed.
 
 Or via API:
 
@@ -142,13 +146,24 @@ curl -X POST https://brandgurdian.azurewebsites.net/clear-rules
 
 ### Run Locally
 
+The API and the frontend are two separate processes.
+
 ```bash
+# Terminal 1 — the API
 uv run uvicorn backend.src.api.server:app --reload
 ```
 
-- App: `http://localhost:8000/app`
+```bash
+# Terminal 2 — the frontend (static files, no build step)
+cd web && python3 -m http.server 5500
+```
+
+- App: `http://localhost:5500/index.html`
 - API docs: `http://localhost:8000/docs`
-- Architecture: `http://localhost:8000/architecture`
+
+`web/app.html` calls the API at `http://localhost:8000` automatically when
+running on localhost. In production, deploy the two separately and update
+`API_BASE` in `web/app.html` to point at the real API URL.
 
 ---
 
@@ -157,21 +172,23 @@ uv run uvicorn backend.src.api.server:app --reload
 ```
 brand-guardian-ai/
 ├── backend/
+│   ├── scripts/
+│   │   └── index_documents.py   # PDF chunking + Azure AI Search indexer (CLI + API)
 │   └── src/
 │       ├── api/
-│       │   ├── server.py        # FastAPI app — audit, status, rule upload endpoints
+│       │   ├── server.py        # FastAPI app — pure JSON API, no frontend coupling
 │       │   └── telemetry.py     # Azure Monitor / OpenTelemetry setup
 │       ├── graph/
 │       │   ├── state.py         # LangGraph state schema
 │       │   ├── nodes.py         # Video Indexer + GPT-4o Auditor nodes
 │       │   └── workflow.py      # LangGraph DAG definition
 │       └── services/
-│           ├── video_indexer.py # Azure Video Indexer service
-│           └── rule_indexer.py  # PDF chunking + Azure AI Search indexer
-├── frontend/
+│           └── video_indexer.py # Azure Video Indexer service
+├── web/
 │   ├── index.html               # Landing page
-│   ├── app.html                 # Audit tool UI
-│   └── architecture.html        # High-level + low-level architecture diagrams
+│   ├── app.html                 # Audit tool UI (rule upload + video audit)
+│   ├── theme.css                # Shared design tokens
+│   └── theme.js                 # Light/dark theme toggle
 ├── main.py                      # CLI entry point
 ├── Dockerfile
 └── requirements.txt

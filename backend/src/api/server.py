@@ -4,12 +4,10 @@ import logging
 import shutil
 import tempfile
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from fastapi.middleware.cors import CORSMiddleware
-from backend.src.services.rule_indexer import clear_rules, index_pdf_files
+from backend.scripts.index_documents import clear_rules, index_pdf_files
 
 # In-memory job store: { job_id: { status, result, error } }
 jobs: Dict[str, Any] = {}
@@ -61,21 +59,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Serve the frontend HTML
-FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "frontend"))
-
-@app.get("/", response_class=FileResponse)
-def serve_landing():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
-
-@app.get("/app", response_class=FileResponse)
-def serve_app():
-    return FileResponse(os.path.join(FRONTEND_DIR, "app.html"))
-
-@app.get("/architecture", response_class=FileResponse)
-def serve_architecture():
-    return FileResponse(os.path.join(FRONTEND_DIR, "architecture.html"))
 # FastAPI automatically creates:
 # - Interactive docs at http://localhost:8000/docs
 # - OpenAPI schema at http://localhost:8000/openapi.json
