@@ -12,6 +12,7 @@ wheels/
 
 # Claude Code local tooling state
 .claude/
+CLAUDE.md
 
 # IDE / OS
 .vscode/
