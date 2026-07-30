@@ -9,3 +9,12 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Claude Code local tooling state
+.claude/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

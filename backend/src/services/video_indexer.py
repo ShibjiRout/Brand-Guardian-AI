@@ -2,22 +2,49 @@ import os
 import time
 import logging
 import requests
-import yt_dlp  
-from azure.identity import DefaultAzureCredential
+import yt_dlp
+from azure.identity import ClientSecretCredential
 
 logger = logging.getLogger("video-indexer")
 
+
 class VideoIndexerService:
+    """Same public API as services/video_indexer.py's VideoIndexerService,
+    but authenticates via a Service Principal (ClientSecretCredential) instead
+    of DefaultAzureCredential — for hosts without Azure Managed Identity
+    (e.g. Linode), where a Service Principal (Tenant ID + Client ID + Client
+    Secret) is the only auth option.
+    """
+
     def __init__(self):
         self.account_id = os.getenv("AZURE_VI_ACCOUNT_ID")
         self.location = os.getenv("AZURE_VI_LOCATION")
         self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
         self.resource_group = os.getenv("AZURE_RESOURCE_GROUP")
         self.vi_name = os.getenv("AZURE_VI_NAME", "project-brand-guardian-001")
-        self.credential = DefaultAzureCredential()
+
+        tenant_id = os.getenv("AZURE_TENANT_ID")
+        client_id = os.getenv("AZURE_CLIENT_ID")
+        client_secret = os.getenv("AZURE_CLIENT_SECRET")
+
+        missing = [
+            name for name, value in [
+                ("AZURE_TENANT_ID", tenant_id),
+                ("AZURE_CLIENT_ID", client_id),
+                ("AZURE_CLIENT_SECRET", client_secret),
+            ] if not value
+        ]
+        if missing:
+            raise Exception(f"Missing required environment variables: {', '.join(missing)}")
+
+        self.credential = ClientSecretCredential(
+            tenant_id=tenant_id,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
 
     def get_access_token(self):
-        """Generates an ARM Access Token."""
+        """Generates an ARM Access Token using the Service Principal."""
         try:
             token_object = self.credential.get_token("https://management.azure.com/.default")
             return token_object.token
@@ -84,32 +111,29 @@ class VideoIndexerService:
         except Exception as e:
             raise Exception(f"YouTube Download Failed: {str(e)}")
 
-    # --- UPDATED FUNCTION: Upload Local File ---
     def upload_video(self, video_path, video_name):
         """Uploads a LOCAL FILE to Azure Video Indexer."""
         arm_token = self.get_access_token()
         vi_token = self.get_account_token(arm_token)
 
         api_url = f"https://api.videoindexer.ai/{self.location}/Accounts/{self.account_id}/Videos"
-        
+
         params = {
             "accessToken": vi_token,
             "name": video_name,
             "privacy": "Private",
             "indexingPreset": "Default",
-            # We removed "videoUrl" because we are sending a file payload instead
         }
-        
+
         logger.info(f"Uploading file {video_path} to Azure...")
-        
-        # Open the file in binary mode and stream it to Azure
+
         with open(video_path, 'rb') as video_file:
             files = {'file': video_file}
             response = requests.post(api_url, params=params, files=files)
-        
+
         if response.status_code != 200:
             raise Exception(f"Azure Upload Failed: {response.text}")
-            
+
         return response.json().get("id")
 
     def wait_for_processing(self, video_id):
@@ -118,12 +142,12 @@ class VideoIndexerService:
         while True:
             arm_token = self.get_access_token()
             vi_token = self.get_account_token(arm_token)
-            
+
             url = f"https://api.videoindexer.ai/{self.location}/Accounts/{self.account_id}/Videos/{video_id}/Index"
             params = {"accessToken": vi_token}
             response = requests.get(url, params=params)
             data = response.json()
-            
+
             state = data.get("state")
             if state == "Processed":
                 return data
@@ -131,7 +155,7 @@ class VideoIndexerService:
                 raise Exception("Video Indexing Failed in Azure.")
             elif state == "Quarantined":
                 raise Exception("Video Quarantined (Copyright/Content Policy Violation).")
-            
+
             logger.info(f"Status: {state}... waiting 30s")
             time.sleep(30)
 
@@ -141,12 +165,12 @@ class VideoIndexerService:
         for v in vi_json.get("videos", []):
             for insight in v.get("insights", {}).get("transcript", []):
                 transcript_lines.append(insight.get("text"))
-        
+
         ocr_lines = []
         for v in vi_json.get("videos", []):
             for insight in v.get("insights", {}).get("ocr", []):
                 ocr_lines.append(insight.get("text"))
-                
+
         return {
             "transcript": " ".join(transcript_lines),
             "ocr_text": ocr_lines,
