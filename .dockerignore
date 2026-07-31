@@ -49,7 +49,10 @@ logs/
 *.md
 docs/
 
-# The frontend (web/) is a separate static site, not served by this API,
-# but is still copied into the image today since Dockerfile uses `COPY . .`.
-# Not harmful, just unnecessary image bloat — exclude web/ here if that
-# ever needs trimming down.
+# The frontend (web/) is a separate static site, not served by this API —
+# Caddy serves it directly from disk on the server. Excluded here so it
+# doesn't bloat the API image for no reason.
+web/
+
+# Claude Code local tooling state (worktrees, etc.) — never needed in the image
+.claude/
