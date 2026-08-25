@@ -1,17 +1,47 @@
 # 🛡️ Brand Guardian AI
-### Multi-modal YouTube Ad Compliance Auditing Engine
 
-> AI-powered compliance auditing pipeline that ingests YouTube advertisements or uploaded video files, extracts speech-to-text transcripts and on-screen text (OCR), retrieves regulatory rules via RAG from indexed compliance PDFs, and uses GPT-4o to detect brand compliance violations — all orchestrated with LangGraph and deployed on Azure.
+### AI compliance auditor for video advertisements
+
+Brand Guardian AI watches a video ad so a compliance reviewer doesn't have to.
+Give it a YouTube URL or upload a video file — it transcribes the speech,
+OCRs every on-screen graphic, checks both against a knowledge base of
+regulatory rules (FTC guidelines, CAP Code, or any rulebook you index
+yourself), and returns a **PASS/FAIL verdict** where every flagged violation
+must cite an exact quote from the transcript or on-screen text. No citation,
+no violation — this kills hallucinated flags and stops puffery ("the best
+you'll ever feel") from being mistaken for a compliance breach.
+
+**Live app:** [brandgurdian.lol](https://brandgurdian.lol)
+**API:** [api.brandgurdian.lol/docs](https://api.brandgurdian.lol/docs)
 
 ---
 
-## 🌐 Live Demo
+## What it can do
 
-**[https://brandgurdian.azurewebsites.net](https://brandgurdian.azurewebsites.net)**
+- **Audit by URL or by upload** — paste a YouTube link (server downloads it)
+  or upload a video file directly, whichever fits your workflow.
+- **Understands both audio and on-screen text** — speech-to-text transcript
+  *and* OCR of graphics/lower-thirds/disclaimers, so a claim buried in
+  on-screen fine print gets caught just as reliably as a spoken one.
+- **Grounded in your own rulebook, not the model's memory** — upload
+  compliance PDFs once (CAP Code, FTC guidance, an internal brand policy —
+  anything) and every audit retrieves and cites the most relevant clauses
+  from *those* documents via RAG, instead of GPT-4o guessing from general
+  training knowledge.
+- **Evidence-required verdicts** — the compliance prompt forces every
+  flagged violation to quote the exact transcript/OCR text that triggered
+  it, plus the specific rule it breaks. Tuned over real false positives to
+  stop over-flagging marketing puffery and vague superlatives.
+- **Built for long-running jobs** — video indexing takes minutes, so audits
+  run as background jobs you poll for status, instead of holding an HTTP
+  connection open until it times out.
+- **Self-serve rule management** — swap out the entire compliance rulebook
+  (clear + re-index) without touching code, via the same API/UI a
+  non-engineer would use.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 [YouTube URL]  OR  [Uploaded Video File]
@@ -26,66 +56,67 @@
 [FastAPI Backend + Async Job Polling] ← [Static Frontend, served separately]
 ```
 
-The API (`backend/`) and the frontend (`web/`) are decoupled — the API is a
-pure JSON service with no HTML routes; the frontend is a separate static
-site that calls it over HTTP.
+The API (`backend/`) and the frontend (`web/`) are fully decoupled — the API
+is a pure JSON service with no HTML routes; the frontend is a separate
+static site that calls it over `fetch()`. They can be hosted, scaled, and
+versioned independently.
 
 ### Core Components
 
 | Layer | Technology |
 |---|---|
-| Orchestration | LangGraph StateGraph |
-| Video Processing | Azure Video Indexer (OCR + Transcript) |
-| Knowledge Base | Azure AI Search (Vector DB) |
-| Embeddings | OpenAI text-embedding-3-small |
-| LLM | OpenAI GPT-4o |
-| API | FastAPI + Uvicorn (async job polling) |
-| Observability | LangSmith + Azure Application Insights |
-| Deployment | Docker → Azure Container Registry → Azure App Service |
-| CI/CD | GitHub Actions (azure/login@v3, azure/webapps-deploy@v3) |
+| Orchestration | LangGraph StateGraph (2-node DAG) |
+| Video Processing | Azure Video Indexer (speech-to-text + OCR) |
+| Knowledge Base | Azure AI Search (vector DB) |
+| Embeddings | OpenAI `text-embedding-3-small` |
+| LLM | OpenAI GPT-4o (temperature 0.0) |
+| API | FastAPI + Uvicorn, async job polling |
+| Frontend | Plain HTML/CSS/JS, no build step |
+| Observability | LangSmith tracing + Azure Application Insights (optional) |
+| Testing | pytest + FastAPI TestClient |
+| Containerization | Docker |
+| CI/CD | GitHub Actions → Docker Hub → SSH deploy |
 
----
-
-## 🔄 LangGraph Workflow
+### LangGraph Workflow
 
 ```
 START → [index_video_node] → [audit_content_node] → END
 ```
 
-**Node 1 — Video Indexer:**
-- Option 1: Downloads YouTube video via yt-dlp, uploads to Azure Video Indexer
-- Option 2: Accepts uploaded video file directly (bypasses yt-dlp for cloud environments)
-- Polls until processing complete, extracts transcript and OCR text
+**Node 1 — Video Indexer**
+- Downloads the YouTube video via `yt-dlp`, *or* uses an already-uploaded
+  local file — whichever the request provided.
+- Uploads it to Azure Video Indexer, polls until processing completes,
+  extracts the transcript and OCR text.
 
-**Node 2 — Compliance Auditor:**
-- Embeds transcript + OCR using OpenAI text-embedding-3-small
-- Retrieves top-3 relevant compliance rules from Azure AI Search (RAG)
-- Sends to GPT-4o with retrieved rules and strict interpretation guidelines
-- Returns structured JSON with violations, severity, and plain-English report
+**Node 2 — Compliance Auditor**
+- Embeds transcript + OCR text, retrieves the top-3 most relevant rules
+  from Azure AI Search.
+- Sends transcript, OCR, and retrieved rules to GPT-4o with a strict
+  citation-required system prompt.
+- Returns structured JSON: PASS/FAIL, violations with severity, and a
+  plain-English summary.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.12+
-- Azure subscription with:
-  - Azure Video Indexer
-  - Azure AI Search
-  - Azure Blob Storage
-  - Azure Application Insights
-- OpenAI API key
-- LangSmith account
+- Python 3.14 (see `.python-version` / `pyproject.toml`)
+- [`uv`](https://docs.astral.sh/uv/) for local dependency management
+- An OpenAI API key
+- Azure resources: Video Indexer, AI Search, and a Service Principal
+  (Tenant ID / Client ID / Client Secret) with the **Video Indexer Account
+  Contributor** role assigned directly on the Video Indexer resource
+- (Optional) LangSmith account for trace debugging
 
 ### Installation
 
 ```bash
 git clone https://github.com/ShibjiRout/Brand-Guardian-AI.git
 cd Brand-Guardian-AI
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-pip install -r requirements.txt
+uv sync
 ```
 
 ### Environment Variables
@@ -102,51 +133,58 @@ AZURE_SEARCH_API_KEY="your-key"
 AZURE_SEARCH_INDEX_NAME="brand-compliance-rules"
 
 # Azure Video Indexer
-AZURE_VI_ACCOUNT_ID="your-account-id"
-AZURE_VI_LOCATION="germanywestcentral"
 AZURE_VI_NAME="your-vi-name"
+AZURE_VI_LOCATION="eastus"
+AZURE_VI_ACCOUNT_ID="your-account-id"
 AZURE_SUBSCRIPTION_ID="your-subscription-id"
 AZURE_RESOURCE_GROUP="your-resource-group"
 
-# Azure Storage
-AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;..."
-
-# Azure Monitor
-APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=..."
-
-# LangSmith
-LANGCHAIN_TRACING_V2="true"
-LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
-LANGCHAIN_API_KEY="lsv2_..."
-LANGCHAIN_PROJECT="brand-guardian-prod"
-
-# Azure Auth (for deployment)
+# Azure Service Principal (Video Indexer auth — works on any host, not just Azure)
 AZURE_TENANT_ID="your-tenant-id"
 AZURE_CLIENT_ID="your-client-id"
 AZURE_CLIENT_SECRET="your-client-secret"
+
+# Optional — Application Insights
+APPLICATIONINSIGHTS_CONNECTION_STRING=""
+
+# Optional — LangSmith tracing
+LANGSMITH_TRACING=true
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY="lsv2_..."
+LANGSMITH_PROJECT="Brand Guardian AI"
 ```
+
+> Note: Docker's `--env-file` does **not** strip quotes the way
+> `python-dotenv` does — if you ever load this file into a container
+> directly, use unquoted values.
 
 ### Index Compliance Rules (PDF Upload)
 
-Use the audit tool's **Step 1 panel** (`web/app.html`) to upload compliance PDFs (e.g. CAP Code, FTC guidelines) directly into Azure AI Search. No manual scripts needed.
+Use the audit tool's **Step 1 panel** (`web/app.html`) to upload compliance
+PDFs (CAP Code, FTC guidance, etc.) directly into Azure AI Search — no
+scripts needed. Or standalone:
+
+```bash
+uv run python backend/scripts/index_documents.py path/to/rules.pdf
+```
 
 Or via API:
 
 ```bash
-curl -X POST https://brandgurdian.azurewebsites.net/upload-rules \
+curl -X POST https://api.brandgurdian.lol/upload-rules \
   -F "files=@CAP-Code.pdf" \
   -F "clear_first=false"
 ```
 
-To wipe the index and re-upload fresh rules:
+To wipe the index and start fresh:
 
 ```bash
-curl -X POST https://brandgurdian.azurewebsites.net/clear-rules
+curl -X POST https://api.brandgurdian.lol/clear-rules
 ```
 
 ### Run Locally
 
-The API and the frontend are two separate processes.
+The API and frontend are two separate processes:
 
 ```bash
 # Terminal 1 — the API
@@ -161,13 +199,31 @@ cd web && python3 -m http.server 5500
 - App: `http://localhost:5500/index.html`
 - API docs: `http://localhost:8000/docs`
 
-`web/app.html` calls the API at `http://localhost:8000` automatically when
-running on localhost. In production, deploy the two separately and update
-`API_BASE` in `web/app.html` to point at the real API URL.
+`web/app.html` calls `http://localhost:8000` automatically when running on
+`localhost`; in production it points at `https://api.brandgurdian.lol`.
+
+Quick graph-only smoke test, no API needed:
+
+```bash
+uv run python main.py
+```
+
+### Run Tests
+
+```bash
+uv run pytest tests/ -v
+```
+
+### Run with Docker (local)
+
+```bash
+docker compose up --build
+curl http://localhost:8000/health
+```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 brand-guardian-ai/
@@ -183,44 +239,48 @@ brand-guardian-ai/
 │       │   ├── nodes.py         # Video Indexer + GPT-4o Auditor nodes
 │       │   └── workflow.py      # LangGraph DAG definition
 │       └── services/
-│           └── video_indexer.py # Azure Video Indexer service
+│           └── video_indexer.py # Azure Video Indexer service (Service Principal auth)
 ├── web/
 │   ├── index.html               # Landing page
 │   ├── app.html                 # Audit tool UI (rule upload + video audit)
 │   ├── theme.css                # Shared design tokens
 │   └── theme.js                 # Light/dark theme toggle
-├── main.py                      # CLI entry point
+├── tests/
+│   └── test_smoke.py            # FastAPI TestClient smoke tests
+├── main.py                      # CLI entry point (graph-only smoke test)
+├── docker-compose.yml           # Local build/test convenience
 ├── Dockerfile
 └── requirements.txt
 ```
 
 ---
 
-## 🌐 API Endpoints
+## API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/audit` | Submit YouTube URL — returns `job_id` immediately |
-| POST | `/audit-upload` | Upload video file + metadata — returns `job_id` immediately |
-| GET | `/status/{job_id}` | Poll for audit job result |
-| POST | `/upload-rules` | Upload PDF compliance rules into Azure AI Search |
-| POST | `/clear-rules` | Delete all indexed compliance rules |
-| GET | `/health` | Health check |
-| GET | `/docs` | Interactive Swagger UI |
+| `POST` | `/audit` | Submit a YouTube URL — returns `job_id` immediately |
+| `POST` | `/audit-upload` | Upload a video file + metadata — returns `job_id` immediately |
+| `GET` | `/status/{job_id}` | Poll for audit job result |
+| `POST` | `/upload-rules` | Upload PDF compliance rules into Azure AI Search |
+| `POST` | `/clear-rules` | Delete all indexed compliance rules |
+| `GET` | `/health` | Health check |
+| `GET` | `/docs` | Interactive Swagger UI |
 
 ### Async Job Flow
 
-Audits run as background jobs to avoid gateway timeouts on cloud:
+Audits run as background jobs to avoid gateway timeouts on long video
+processing:
 
 ```bash
-# 1. Submit audit
-curl -X POST https://brandgurdian.azurewebsites.net/audit \
+# 1. Submit an audit
+curl -X POST https://api.brandgurdian.lol/audit \
   -H "Content-Type: application/json" \
   -d '{"video_url": "https://youtu.be/your-video-id"}'
 # → {"job_id": "abc-123"}
 
-# 2. Poll for result
-curl https://brandgurdian.azurewebsites.net/status/abc-123
+# 2. Poll for the result
+curl https://api.brandgurdian.lol/status/abc-123
 # → {"status": "complete", "result": {...}}
 ```
 
@@ -244,38 +304,57 @@ curl https://brandgurdian.azurewebsites.net/status/abc-123
 
 ---
 
-## 📊 Observability
+## Deployment
 
-- **LangSmith** — Full LangGraph trace debugging, node-level execution tracking
-- **Azure Application Insights** — HTTP request logs, error tracking, performance metrics via OpenTelemetry
+Every push to `main` runs a 3-stage GitHub Actions pipeline:
+
+1. **Test** — `uv run pytest tests/` (build stops here if broken)
+2. **Build & Push** — builds the Docker image, pushes to Docker Hub tagged
+   `latest` and with the commit SHA (instant rollback to any prior build)
+3. **Deploy** — SSHes into the production server with a dedicated deploy
+   key, pulls the new image, recreates the API container, and syncs the
+   latest static frontend files via `git pull`
+
+The API runs in Docker behind [Caddy](https://caddyserver.com/) as a
+reverse proxy on a self-managed Linux server, with automatic HTTPS via
+Let's Encrypt. The frontend is served by Caddy as static files on the root
+domain; the API is proxied on a dedicated `api.` subdomain.
 
 ---
 
-## 🐳 Docker Deployment
+## Observability
 
-```bash
-docker build -t ytcompqa.azurecr.io/brand-guardian-api:latest .
-docker push ytcompqa.azurecr.io/brand-guardian-api:latest
-```
-
-CI/CD is automated via GitHub Actions on every push to `main`.
+- **LangSmith** — full LangGraph trace debugging, node-level execution
+  tracking
+- **Azure Application Insights** *(optional)* — HTTP request logs, error
+  tracking, performance metrics via OpenTelemetry; no-ops gracefully if
+  unconfigured
 
 ---
 
-## 🔒 Security
+## Security Notes
 
 - All secrets managed via environment variables — never hardcoded
-- `.env` excluded from Docker image via `.dockerignore`
-- Azure Service Principal with scoped Contributor role
+- `.env` excluded from the Docker build context via `.dockerignore`
+- Azure auth uses a Service Principal scoped to the least-privilege
+  **Video Indexer Account Contributor** role on the specific resource, not
+  a broad Contributor role on the subscription
+- CI/CD uses a dedicated, single-purpose SSH deploy key — separate from any
+  personal credentials
+- CORS is currently wide open (`allow_origins=["*"]`) — deliberate for this
+  public demo tool with no user auth; would be tightened if auth or user
+  data were ever added
 
 ---
 
-## 📋 Tech Stack
+## Tech Stack
 
-`LangGraph` `LangChain` `OpenAI GPT-4o` `FastAPI` `Azure Video Indexer` `Azure AI Search` `Azure Blob Storage` `Azure App Service` `Azure Container Registry` `Docker` `GitHub Actions` `LangSmith` `OpenTelemetry` `Azure Application Insights` `Python 3.12`
+`LangGraph` `LangChain` `OpenAI GPT-4o` `FastAPI` `Azure Video Indexer`
+`Azure AI Search` `Docker` `Caddy` `GitHub Actions` `Docker Hub`
+`LangSmith` `OpenTelemetry` `pytest` `uv` `Python 3.14`
 
 ---
 
-## 📄 License
+## License
 
 MIT License
