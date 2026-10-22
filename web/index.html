@@ -3,25 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Brand Guardian — Compliance auditing for video ads</title>
-<meta name="description" content="Brand Guardian transcribes, OCRs, and audits video ads against your compliance rulebook — every flagged claim cited to an exact quote and an exact rule.">
+<title>Brand Guardian | Compliance checks for video ads</title>
+<meta name="description" content="Brand Guardian checks video ads against your compliance rules. Each problem it reports comes with the exact quote from the ad and the rule it breaks.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=2">
 <style>
   /* ── Hero ── */
+  .hero-band { padding: 104px 0 96px; }
+
   .hero {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 56px;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 72px;
     align-items: center;
-    padding: 8px 0 88px;
   }
 
   .hero h1 {
-    font-size: clamp(34px, 4.6vw, 50px);
-    line-height: 1.08;
+    font-size: clamp(38px, 5vw, 62px);
+    line-height: 1.05;
   }
 
   .hero h1 em {
@@ -30,47 +31,47 @@
   }
 
   .hero-sub {
-    margin-top: 20px;
-    font-size: 16px;
+    margin-top: 24px;
+    font-size: 17px;
     color: var(--text-muted);
-    max-width: 46ch;
+    max-width: 50ch;
     line-height: 1.7;
   }
 
   .hero-actions {
-    margin-top: 32px;
+    margin-top: 36px;
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 14px;
     flex-wrap: wrap;
   }
 
-  .hero-actions .fine {
+  .hero-fine {
+    margin-top: 16px;
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--text-faint);
   }
 
-  /* ── Evidence card: the product's thesis, rendered ── */
+  /* ── Example report card ── */
   .evidence {
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
-    padding: 24px 24px 20px;
-    position: relative;
+    padding: 28px 28px 24px;
   }
 
   .evidence-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }
 
   .evidence-src {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 11.5px;
     letter-spacing: 0.04em;
     color: var(--text-faint);
     display: flex;
@@ -85,7 +86,7 @@
 
   .evidence-transcript {
     font-family: var(--font-mono);
-    font-size: 13.5px;
+    font-size: 14px;
     line-height: 2;
     color: var(--text-muted);
   }
@@ -104,16 +105,16 @@
   }
 
   .evidence-citation {
-    margin-top: 18px;
-    padding-top: 16px;
+    margin-top: 20px;
+    padding-top: 18px;
     border-top: 1px dashed var(--border);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
 
   .evidence-rule {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--text-muted);
     line-height: 1.6;
   }
@@ -122,141 +123,166 @@
 
   .evidence-tags { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  /* ── Stat row ── */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 88px;
-  }
-
-  .stat {
-    background: var(--surface);
-    padding: 22px 24px;
-  }
-
-  .stat-num {
-    font-family: var(--font-display);
-    font-size: 30px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .stat-label {
-    margin-top: 4px;
-    font-size: 12.5px;
-    color: var(--text-muted);
-  }
-
   /* ── Features ── */
   .features {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 88px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
   }
 
   .feature {
-    background: var(--surface);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
     padding: 28px 26px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
   }
 
+  .feature:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); transform: translateY(-2px); }
+
+  .feature-icon {
+    width: 40px; height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .feature-icon svg { width: 20px; height: 20px; }
+
   .feature-title {
-    font-size: 15.5px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text);
     margin-bottom: 8px;
   }
 
   .feature-desc {
-    font-size: 13.5px;
+    font-size: 14px;
     color: var(--text-muted);
     line-height: 1.65;
   }
 
   /* ── Pipeline (real sequence) ── */
-  .pipeline { margin-bottom: 88px; }
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 28px;
+  }
 
   .stage {
-    display: grid;
-    grid-template-columns: 44px 1fr;
-    gap: 20px;
-    padding: 22px 0;
-    border-bottom: 1px solid var(--border);
+    border-top: 2px solid var(--border);
+    padding-top: 20px;
   }
-  .stage:first-child { border-top: 1px solid var(--border); }
+
+  .stage:first-child { border-top-color: var(--accent); }
 
   .stage-num {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-faint);
-    padding-top: 2px;
+    color: var(--accent);
+    margin-bottom: 12px;
   }
 
   .stage-title {
-    font-size: 14.5px;
+    font-size: 15.5px;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 5px;
+    margin-bottom: 8px;
   }
 
   .stage-desc {
     font-size: 13.5px;
     color: var(--text-muted);
     line-height: 1.65;
-    max-width: 62ch;
   }
 
   .stage-tech {
-    margin-top: 8px;
+    margin-top: 12px;
     font-family: var(--font-mono);
     font-size: 11.5px;
-    color: var(--accent);
+    color: var(--text-faint);
   }
 
   /* ── Categories ── */
-  .categories { margin-bottom: 88px; }
+  .checks {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 72px;
+    align-items: start;
+  }
 
-  .cat-list { display: flex; flex-direction: column; }
+  .checks h2 { font-size: clamp(26px, 3vw, 38px); line-height: 1.15; }
+  .checks-intro p { margin-top: 16px; font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 44ch; }
+
+  .stack-label {
+    margin-top: 36px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .stack { display: flex; flex-wrap: wrap; gap: 9px; }
+
+  .cat-list {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
 
   .cat-item {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 13px 0;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 22px;
     border-bottom: 1px solid var(--border);
-    font-size: 13.5px;
+    font-size: 14px;
+    line-height: 1.6;
     color: var(--text-muted);
   }
-  .cat-item:first-child { border-top: 1px solid var(--border); }
+  .cat-item:last-child { border-bottom: none; }
+  .cat-item .chip { min-width: 74px; justify-content: center; margin-top: 1px; }
 
-  /* ── Stack ── */
-  .stack {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-    margin-bottom: 8px;
+  /* ── CTA ── */
+  .cta {
+    text-align: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 72px 32px;
   }
 
-  @media (max-width: 760px) {
-    .hero { grid-template-columns: 1fr; }
-    .stats, .features { grid-template-columns: 1fr; }
+  .cta h2 { font-size: clamp(28px, 3.4vw, 42px); }
+  .cta p { margin: 14px auto 32px; font-size: 16px; color: var(--text-muted); max-width: 52ch; }
+
+  @media (max-width: 1020px) {
+    .features { grid-template-columns: repeat(2, 1fr); }
+    .pipeline { grid-template-columns: repeat(3, 1fr); row-gap: 40px; }
+  }
+
+  @media (max-width: 860px) {
+    .hero, .checks { grid-template-columns: 1fr; gap: 48px; }
+    .hero-band { padding: 64px 0; }
+  }
+
+  @media (max-width: 640px) {
+    .features { grid-template-columns: 1fr; }
+    .pipeline { grid-template-columns: 1fr; }
+    .cta { padding: 48px 20px; }
   }
 </style>
 </head>
 <body>
 
-<div class="shell">
-
-  <div class="topbar">
+<header class="site-header">
+  <div class="shell topbar">
     <a class="brand" href="index.html">
       <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
         <circle cx="13" cy="13" r="12" stroke="currentColor" stroke-width="1.3"/>
@@ -266,164 +292,188 @@
       <span class="brand-word">Brand Guardian</span>
     </a>
     <nav class="topnav">
-      <a href="app.html">Audit tool</a>
-      <a href="https://github.com/ShibjiRout/Brand-Guardian-AI" rel="noopener">Source</a>
+      <a href="#how-it-works">How it works</a>
+      <a class="nav-secondary" href="https://github.com/ShibjiRout/Brand-Guardian-AI" rel="noopener">Source</a>
+      <a class="btn btn-primary btn-sm nav-cta" href="app.html">Open audit tool</a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.9 4.9l1.7 1.7M17.3 17.3l1.7 1.7M2.5 12h2.4M19 12h2.4M4.9 19l1.7-1.7M17.3 6.7l1.7-1.7"/></svg>
       </button>
     </nav>
   </div>
+</header>
+
+<main>
 
   <!-- HERO -->
-  <div class="hero enter">
-    <div>
-      <div class="eyebrow">Video ad compliance auditing</div>
-      <h1>Every claim, checked&nbsp;against&nbsp;<em>the&nbsp;rule</em>&nbsp;that&nbsp;governs&nbsp;it.</h1>
-      <p class="hero-sub">
-        Brand Guardian transcribes your video, reads its on-screen text, and
-        holds every claim up against your own compliance rulebook — CAP Code,
-        FTC guidance, whatever you've indexed. It never flags what it can't
-        quote.
-      </p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="app.html">Audit a video →</a>
-        <span class="fine">no signup — paste a link and go</span>
-      </div>
-    </div>
+  <section class="hero-band">
+    <div class="shell">
+      <div class="hero enter">
+        <div>
+          <div class="eyebrow">Compliance checks for video ads</div>
+          <h1>Find the claims in your video ad that break <em>the rules</em>.</h1>
+          <p class="hero-sub">
+            Brand Guardian listens to your video and reads the text on screen.
+            It compares what the ad says with the rule documents you upload,
+            such as the CAP Code or FTC guidance. It only reports a problem
+            when it can quote the exact words from the ad.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="app.html">Check a video</a>
+            <a class="btn btn-ghost" href="#how-it-works">How it works</a>
+          </div>
+          <p class="hero-fine">No sign-up needed. Paste a YouTube link to start.</p>
+        </div>
 
-    <div class="evidence">
-      <div class="evidence-head">
-        <div class="evidence-src"><span class="evidence-dot"></span> vid_0982b848 — 0:32</div>
-        <span class="chip chip-critical">Critical</span>
-      </div>
-      <div class="evidence-transcript">
-        <span class="ts">00:29</span> …clinically proven to work in days, and<br>
-        <span class="ts">00:32</span> we <mark>guarantee</mark> results for every skin type.
-      </div>
-      <div class="evidence-citation">
-        <div class="evidence-rule"><b>Misleading Claims</b> — absolute guarantees are prohibited without a substantiating clause. Matches CAP Code Rule 3.1, retrieved from your indexed rulebook.</div>
-        <div class="evidence-tags">
-          <span class="chip chip-muted">CAP Code 3.1</span>
-          <span class="chip chip-muted">exact quote required</span>
+        <div class="evidence">
+          <div class="evidence-head">
+            <div class="evidence-src"><span class="evidence-dot"></span> Example report, at 0:32</div>
+            <span class="chip chip-critical">Critical</span>
+          </div>
+          <div class="evidence-transcript">
+            <span class="ts">00:29</span> clinically proven to work in days, and<br>
+            <span class="ts">00:32</span> we <mark>guarantee</mark> results for every skin type.
+          </div>
+          <div class="evidence-citation">
+            <div class="evidence-rule"><b>Misleading claim.</b> The ad promises results for everyone with no proof. This breaks CAP Code rule 3.1, found in the rules you uploaded.</div>
+            <div class="evidence-tags">
+              <span class="chip chip-muted">CAP Code 3.1</span>
+              <span class="chip chip-muted">Quote from the ad</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats enter">
-    <div class="stat">
-      <div class="stat-num">2</div>
-      <div class="stat-label">LangGraph nodes — index, then audit</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">3</div>
-      <div class="stat-label">Rules retrieved per claim (top-k RAG)</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">0</div>
-      <div class="stat-label">Violations without a cited quote</div>
-    </div>
-  </div>
+  </section>
 
   <!-- FEATURES -->
-  <div class="section-head">What it does</div>
-  <div class="features">
-    <div class="feature">
-      <div class="feature-title">Reads the whole ad</div>
-      <div class="feature-desc">Full speech-to-text transcript and every frame of on-screen text (OCR), extracted via Azure Video Indexer — nothing is judged out of context.</div>
+  <section class="band alt">
+    <div class="shell">
+      <div class="band-head">
+        <div>
+          <div class="eyebrow">Features</div>
+          <h2>What Brand Guardian does</h2>
+        </div>
+        <p>It reads the full ad and looks up the rules that apply. It only reports what it can quote.</p>
+      </div>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="M16.5 10l5-3v10l-5-3"/></svg></div>
+          <div class="feature-title">Reads the whole ad</div>
+          <div class="feature-desc">It writes out everything that is said. It also reads any text shown on screen. Azure Video Indexer does this step.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h11a3 3 0 013 3V20H7a3 3 0 01-3-3z"/><path d="M8 9h6M8 13h6"/></svg></div>
+          <div class="feature-title">Uses your rule documents</div>
+          <div class="feature-desc">Upload your rules as PDF files once. Each ad is checked against the parts of those files that match what the ad says.</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h4v4H7zM7 11c0 3-1 5-3 6M14 7h4v4h-4zM14 11c0 3-1 5-3 6"/></svg></div>
+          <div class="feature-title">Quotes the ad</div>
+          <div class="feature-desc">Every problem it reports includes the exact words from the ad. It ignores normal sales talk like "the best you'll ever feel".</div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/></svg></div>
+          <div class="feature-title">Link or file</div>
+          <div class="feature-desc">Paste a YouTube link. If the download does not work, upload the video file yourself.</div>
+        </div>
+      </div>
     </div>
-    <div class="feature">
-      <div class="feature-title">Retrieves the governing rule</div>
-      <div class="feature-desc">Your compliance PDFs are chunked and embedded once. Each claim is matched against the most relevant passages before judgment is made.</div>
-    </div>
-    <div class="feature">
-      <div class="feature-title">Won't flag what it can't quote</div>
-      <div class="feature-desc">The auditor is instructed to cite an exact line from the transcript or OCR for every violation — and to leave puffery and taglines alone.</div>
-    </div>
-    <div class="feature">
-      <div class="feature-title">Two ways in</div>
-      <div class="feature-desc">Paste a YouTube link for automatic download, or upload the file directly with title and description — the cloud-safe path.</div>
-    </div>
-  </div>
+  </section>
 
   <!-- PIPELINE -->
-  <div class="pipeline">
-    <div class="section-head">How a video becomes a verdict</div>
-    <div class="stage">
-      <div class="stage-num">01</div>
-      <div>
-        <div class="stage-title">Ingest</div>
-        <div class="stage-desc">The video is pulled in — downloaded from YouTube or accepted as a direct upload — and handed to Azure Video Indexer.</div>
-        <div class="stage-tech">yt-dlp · Azure Video Indexer</div>
+  <section class="band" id="how-it-works">
+    <div class="shell">
+      <div class="band-head">
+        <div>
+          <div class="eyebrow">How it works</div>
+          <h2>How a video gets checked</h2>
+        </div>
+        <p>There are five steps. Processing the video takes a few minutes, so the check runs in the background while the page waits for the result.</p>
+      </div>
+      <div class="pipeline">
+        <div class="stage">
+          <div class="stage-num">01</div>
+          <div class="stage-title">Get the video</div>
+          <div class="stage-desc">The video is downloaded from YouTube, or you upload the file. It is then sent to Azure Video Indexer.</div>
+          <div class="stage-tech">yt-dlp, Azure Video Indexer</div>
+        </div>
+        <div class="stage">
+          <div class="stage-num">02</div>
+          <div class="stage-title">Turn it into text</div>
+          <div class="stage-desc">Azure writes out everything that is said. It also reads the text that appears on screen.</div>
+          <div class="stage-tech">Speech to text, OCR (reading text from video frames)</div>
+        </div>
+        <div class="stage">
+          <div class="stage-num">03</div>
+          <div class="stage-title">Find the rules</div>
+          <div class="stage-desc">The ad's text is compared with your rule documents. The three closest matching parts are picked.</div>
+          <div class="stage-tech">OpenAI embeddings, Azure AI Search</div>
+        </div>
+        <div class="stage">
+          <div class="stage-num">04</div>
+          <div class="stage-title">Check the claims</div>
+          <div class="stage-desc">GPT-4o compares the ad with those rules. It must quote the ad for every problem it reports.</div>
+          <div class="stage-tech">GPT-4o</div>
+        </div>
+        <div class="stage">
+          <div class="stage-num">05</div>
+          <div class="stage-title">Show the result</div>
+          <div class="stage-desc">You get a PASS or FAIL with a list of problems. Each problem has a type, a severity and a quote.</div>
+          <div class="stage-tech">FastAPI</div>
+        </div>
       </div>
     </div>
-    <div class="stage">
-      <div class="stage-num">02</div>
-      <div>
-        <div class="stage-title">Transcribe &amp; read the screen</div>
-        <div class="stage-desc">Azure extracts the full speech transcript and every on-screen text element, polling until processing completes.</div>
-        <div class="stage-tech">speech-to-text · OCR</div>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="stage-num">03</div>
-      <div>
-        <div class="stage-title">Retrieve the relevant rules</div>
-        <div class="stage-desc">The transcript and OCR are embedded and matched against your indexed rulebook — only the top three most relevant passages are pulled in.</div>
-        <div class="stage-tech">text-embedding-3-small · Azure AI Search</div>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="stage-num">04</div>
-      <div>
-        <div class="stage-title">Judge, with citations required</div>
-        <div class="stage-desc">GPT-4o weighs each claim against the retrieved rules under strict interpretation guidelines, and must quote its evidence to flag anything.</div>
-        <div class="stage-tech">GPT-4o · temperature 0.0</div>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="stage-num">05</div>
-      <div>
-        <div class="stage-title">Deliver the verdict</div>
-        <div class="stage-desc">A structured PASS/FAIL report — every violation categorized, severity-tagged, and grounded in the exact line that triggered it.</div>
-        <div class="stage-tech">FastAPI · async job polling</div>
-      </div>
-    </div>
-  </div>
+  </section>
 
   <!-- CATEGORIES -->
-  <div class="categories">
-    <div class="section-head">What gets checked</div>
-    <div class="cat-list">
-      <div class="cat-item"><span class="chip chip-critical" style="min-width:66px; justify-content:center;">Critical</span> Absolute or unsubstantiated claims — "guaranteed," "100% safe," "clinically proven" without support</div>
-      <div class="cat-item"><span class="chip chip-critical" style="min-width:66px; justify-content:center;">Critical</span> Missing mandatory disclosures — FTC, ASA, or platform-required disclaimers</div>
-      <div class="cat-item"><span class="chip chip-warning" style="min-width:66px; justify-content:center;">Warning</span> Composition vs. application ambiguity — is an effect attributed to the formula or the routine?</div>
-      <div class="cat-item"><span class="chip chip-warning" style="min-width:66px; justify-content:center;">Warning</span> Borderline claims that may need legal review but aren't a clear-cut breach</div>
-      <div class="cat-item"><span class="chip chip-pass" style="min-width:66px; justify-content:center;">Ignored</span> Puffery and brand taglines — exaggeration no reasonable viewer takes literally</div>
+  <section class="band alt">
+    <div class="shell checks">
+      <div class="checks-intro">
+        <div class="eyebrow">What gets checked</div>
+        <h2>What it reports and what it ignores</h2>
+        <p>The checking instructions were changed after real false alarms. It now leaves normal advertising language alone.</p>
+        <div class="stack-label">Built with</div>
+        <div class="stack">
+          <span class="chip chip-muted">LangGraph</span>
+          <span class="chip chip-muted">GPT-4o</span>
+          <span class="chip chip-muted">Azure Video Indexer</span>
+          <span class="chip chip-muted">Azure AI Search</span>
+          <span class="chip chip-muted">FastAPI</span>
+          <span class="chip chip-muted">OpenAI Embeddings</span>
+          <span class="chip chip-muted">LangSmith</span>
+          <span class="chip chip-muted">Docker</span>
+        </div>
+      </div>
+      <div class="cat-list">
+        <div class="cat-item"><span class="chip chip-critical">Critical</span> Claims with no proof, such as "guaranteed", "100% safe" or "clinically proven".</div>
+        <div class="cat-item"><span class="chip chip-critical">Critical</span> Missing disclaimers that the FTC, the ASA or the platform requires.</div>
+        <div class="cat-item"><span class="chip chip-warning">Warning</span> Claims that don't say if the result comes from the product itself or from how you use it.</div>
+        <div class="cat-item"><span class="chip chip-warning">Warning</span> Claims close to the line that a lawyer should look at.</div>
+        <div class="cat-item"><span class="chip chip-pass">Ignored</span> Normal sales talk and taglines that no viewer would take literally.</div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- STACK -->
-  <div class="section-head">Built with</div>
-  <div class="stack">
-    <span class="chip chip-muted">LangGraph</span>
-    <span class="chip chip-muted">GPT-4o</span>
-    <span class="chip chip-muted">Azure Video Indexer</span>
-    <span class="chip chip-muted">Azure AI Search</span>
-    <span class="chip chip-muted">FastAPI</span>
-    <span class="chip chip-muted">OpenAI Embeddings</span>
-    <span class="chip chip-muted">LangSmith</span>
-    <span class="chip chip-muted">Docker</span>
-  </div>
+  <!-- CTA -->
+  <section class="band">
+    <div class="shell">
+      <div class="cta">
+        <h2>Check a video</h2>
+        <p>Upload your rule PDFs, then paste a YouTube link. The report is ready in a few minutes.</p>
+        <a class="btn btn-primary" href="app.html">Open the audit tool</a>
+      </div>
+    </div>
+  </section>
 
-  <footer class="site">
+</main>
+
+<footer class="site">
+  <div class="shell">
     <span>Brand Guardian</span>
-    <span>LangGraph · Azure Video Indexer · OpenAI GPT-4o</span>
-  </footer>
-
-</div>
+    <span>LangGraph, Azure Video Indexer, OpenAI GPT-4o</span>
+  </div>
+</footer>
 
 <script src="theme.js"></script>
 </body>

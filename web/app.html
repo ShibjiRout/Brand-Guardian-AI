@@ -3,22 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audit tool — Brand Guardian</title>
+<title>Audit tool | Brand Guardian</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="theme.css?v=2">
 <style>
-  .page-head { margin-bottom: 40px; }
-  .page-head h1 { font-size: clamp(26px, 3.4vw, 34px); }
-  .page-head p { margin-top: 10px; font-size: 14.5px; color: var(--text-muted); max-width: 60ch; }
+  main.shell { padding-top: 48px; padding-bottom: 96px; }
+
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-head h1 { font-size: clamp(28px, 3.4vw, 40px); }
+  .page-head p { margin-top: 10px; font-size: 15px; color: var(--text-muted); max-width: 60ch; }
+
+  .api-pill {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .api-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
+  .api-pill.up .dot { background: var(--pass); box-shadow: 0 0 0 3px var(--pass-soft); }
+  .api-pill.down .dot { background: var(--critical); box-shadow: 0 0 0 3px var(--critical-soft); }
+
+  /* Workspace: rulebook sidebar + audit column */
+  .workspace {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .sidebar { position: sticky; top: calc(var(--header-h) + 24px); }
 
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 28px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
+  }
+  .sidebar .panel { margin-bottom: 0; }
+
+  .empty-state {
+    text-align: center;
+    padding: 64px 32px;
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    color: var(--text-faint);
+  }
+  .empty-state svg { width: 36px; height: 36px; margin-bottom: 14px; color: var(--text-faint); }
+  .empty-state h3 { font-size: 18px; margin-bottom: 6px; color: var(--text-muted); }
+  .empty-state p { font-size: 14px; max-width: 42ch; margin: 0 auto; }
+  .status-bar.show ~ .empty-state,
+  .error-box.show ~ .empty-state,
+  #results.show ~ .empty-state { display: none; }
+
+  @media (max-width: 960px) {
+    .workspace { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+  }
+
+  @media (max-width: 640px) {
+    .page-head { flex-direction: column; align-items: flex-start; }
+    main.shell { padding-top: 32px; }
+    .panel { padding: 20px; }
   }
 
   .panel-head {
@@ -124,6 +187,8 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .violation { background: var(--surface-2); }
+
   .result-title { font-family: var(--font-display); font-size: 21px; font-weight: 600; }
 
   .status-badge {
@@ -215,9 +280,8 @@
 </head>
 <body>
 
-<div class="shell">
-
-  <div class="topbar">
+<header class="site-header">
+  <div class="shell topbar">
     <a class="brand" href="index.html">
       <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
         <circle cx="13" cy="13" r="12" stroke="currentColor" stroke-width="1.3"/>
@@ -228,25 +292,35 @@
     </a>
     <nav class="topnav">
       <a href="app.html" class="current">Audit tool</a>
-      <a href="https://github.com/ShibjiRout/Brand-Guardian-AI" rel="noopener">Source</a>
+      <a class="nav-secondary" href="https://github.com/ShibjiRout/Brand-Guardian-AI" rel="noopener">Source</a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme">
         <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
         <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.9 4.9l1.7 1.7M17.3 17.3l1.7 1.7M2.5 12h2.4M19 12h2.4M4.9 19l1.7-1.7M17.3 6.7l1.7-1.7"/></svg>
       </button>
     </nav>
   </div>
+</header>
+
+<main class="shell">
 
   <div class="page-head enter">
-    <h1>Audit a video</h1>
-    <p>Index your compliance rules once, then submit any video to check its transcript and on-screen text against them.</p>
+    <div>
+      <div class="eyebrow">Audit tool</div>
+      <h1>Audit a video</h1>
+      <p>Upload your rule PDFs first. Then add a video to check what it says and shows against those rules.</p>
+    </div>
+    <span class="api-pill" id="apiPill"><span class="dot"></span><span id="apiPillText">Checking API…</span></span>
   </div>
 
+  <div class="workspace">
+
   <!-- STEP 1: RULES -->
+  <aside class="sidebar">
   <div class="panel enter">
     <div class="panel-head">
       <div>
         <div class="panel-eyebrow">Step 1</div>
-        <div class="panel-title">Compliance rulebook</div>
+        <div class="panel-title">Your rules</div>
       </div>
     </div>
 
@@ -257,23 +331,25 @@
         <div class="file-drop-text">Drop <b>.pdf</b> files here, or click to browse</div>
         <div class="file-name" id="rulesNames"></div>
       </div>
-      <p class="hint">Each PDF is chunked, embedded, and indexed into Azure AI Search — this is the rulebook every audit is checked against.</p>
+      <p class="hint">Each PDF is split into small parts and saved in Azure AI Search. Every video is checked against these files.</p>
     </div>
 
     <label class="checkbox-row">
       <input type="checkbox" id="clearFirst" />
-      Replace the existing rulebook instead of adding to it
+      Delete the current rules before adding these
     </label>
 
     <div class="rules-actions">
-      <button class="btn btn-primary" onclick="uploadRules()">Index rules</button>
+      <button class="btn btn-primary" onclick="uploadRules()">Upload rules</button>
       <button class="btn btn-danger" onclick="clearRules()">Clear all rules</button>
     </div>
 
     <div class="rules-status" id="rulesStatus"></div>
   </div>
+  </aside>
 
   <!-- STEP 2: AUDIT -->
+  <section>
   <div class="panel enter">
     <div class="panel-head">
       <div>
@@ -295,23 +371,23 @@
           <input type="url" id="urlOpt1" placeholder="https://youtu.be/..." />
           <button class="btn btn-primary" onclick="runAudit()">Run audit</button>
         </div>
-        <p class="hint">Downloaded automatically via yt-dlp. Works locally; may be restricted on some cloud hosts.</p>
+        <p class="hint">The server downloads the video for you. If that fails, use "Upload a file" instead.</p>
       </div>
     </div>
 
     <!-- OPTION 2 -->
     <div id="panel2" style="display:none;">
       <div class="field">
-        <label>YouTube URL <span style="text-transform:none; font-weight:400;">(for metadata only)</span></label>
+        <label>YouTube URL <span style="text-transform:none; font-weight:400;">(only used to get the video's details)</span></label>
         <input type="url" id="urlOpt2" placeholder="https://youtu.be/..." />
       </div>
       <div class="field">
         <label>Video title</label>
-        <input type="text" id="videoTitle" placeholder="Enter the video's title..." />
+        <input type="text" id="videoTitle" placeholder="Title of the video" />
       </div>
       <div class="field">
         <label>Video description</label>
-        <input type="text" id="videoDescription" placeholder="Enter the video's description..." />
+        <input type="text" id="videoDescription" placeholder="Description of the video" />
       </div>
       <div class="field">
         <label>Video file</label>
@@ -320,7 +396,7 @@
           <div class="file-drop-text">Drop your <b>.mp4 / .mov / .avi</b> here, or click to browse</div>
           <div class="file-name" id="fileName"></div>
         </div>
-        <p class="hint">The file uploads directly — no YouTube download needed. The URL above is only used to pull metadata.</p>
+        <p class="hint">The file goes straight to the server, so nothing is downloaded from YouTube.</p>
       </div>
       <button class="btn btn-primary" onclick="runAudit()">Run audit</button>
     </div>
@@ -328,12 +404,12 @@
 
   <div class="status-bar" id="statusBar">
     <div class="spinner"></div>
-    <span id="statusText">Initializing audit session…</span>
+    <span id="statusText">Starting...</span>
   </div>
 
   <div class="error-box" id="errorBox"></div>
 
-  <div id="results">
+  <div id="results" class="panel">
     <div class="result-head">
       <div class="result-title">Audit report</div>
       <div class="status-badge" id="statusBadge">—</div>
@@ -367,18 +443,42 @@
     </div>
   </div>
 
-  <footer class="site">
-    <span>Brand Guardian</span>
-    <span>LangGraph · Azure Video Indexer · OpenAI GPT-4o</span>
-  </footer>
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20a.5.5 0 01-.5.5h-10.5a.5.5 0 01-.5-.5V4a.5.5 0 01.5-.5z"/><path d="M14 3.5V8h4M9 13l2 2 4-4"/></svg>
+    <h3>Your report shows up here</h3>
+    <p>Add a video above. It usually takes a few minutes. Keep this tab open while it runs.</p>
+  </div>
+  </section>
 
-</div>
+  </div>
+
+</main>
+
+<footer class="site">
+  <div class="shell">
+    <span>Brand Guardian</span>
+    <span>LangGraph, Azure Video Indexer, OpenAI GPT-4o</span>
+  </div>
+</footer>
 
 <script src="theme.js"></script>
 <script>
   const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
     ? 'http://localhost:8000' : 'https://api.brandgurdian.lol';
   let currentMode = 1;
+
+  (async function checkApi() {
+    const pill = document.getElementById('apiPill');
+    const text = document.getElementById('apiPillText');
+    try {
+      const res = await fetch(`${API_BASE}/docs`, { method: 'GET' });
+      pill.classList.add(res.ok ? 'up' : 'down');
+      text.textContent = res.ok ? 'API online' : 'API error';
+    } catch (e) {
+      pill.classList.add('down');
+      text.textContent = 'API offline';
+    }
+  })();
 
   function setMode(m) {
     currentMode = m;
@@ -402,22 +502,22 @@
   function setStatus(msg) { document.getElementById('statusText').textContent = msg; }
 
   const STEPS_OPT1 = [
-    'Connecting to the Brand Guardian API…',
-    'Downloading the video via yt-dlp…',
-    'Uploading to Azure Video Indexer…',
-    'Azure is transcribing and reading on-screen text…',
-    'Still processing — this can take a few minutes…',
-    'Almost there — waiting on Azure to finish…',
-    'Running the compliance audit with GPT-4o…',
+    'Connecting to the server...',
+    'Downloading the video...',
+    'Sending the video to Azure Video Indexer...',
+    'Azure is reading the speech and on-screen text...',
+    'Still working. This can take a few minutes...',
+    'Nearly done. Waiting for Azure to finish...',
+    'Checking the claims with GPT-4o...',
   ];
   const STEPS_OPT2 = [
-    'Connecting to the Brand Guardian API…',
-    'Uploading your video file to the server…',
-    'Uploading to Azure Video Indexer…',
-    'Azure is transcribing and reading on-screen text…',
-    'Still processing — this can take a few minutes…',
-    'Almost there — waiting on Azure to finish…',
-    'Running the compliance audit with GPT-4o…',
+    'Connecting to the server...',
+    'Uploading your video file...',
+    'Sending the video to Azure Video Indexer...',
+    'Azure is reading the speech and on-screen text...',
+    'Still working. This can take a few minutes...',
+    'Nearly done. Waiting for Azure to finish...',
+    'Checking the claims with GPT-4o...',
   ];
 
   let stepTimer = null;
@@ -512,7 +612,7 @@
 
       if (job.status === 'complete') {
         stopStepMessages();
-        setStatus('Audit complete — rendering results…');
+        setStatus('Done. Loading the report...');
         setTimeout(() => renderResults(job.result), 350);
         return;
       }
@@ -542,7 +642,7 @@
     list.innerHTML = '';
 
     if (data.compliance_results.length === 0) {
-      list.innerHTML = `<div class="no-violations"><div class="check">✓</div><p>NO VIOLATIONS DETECTED</p></div>`;
+      list.innerHTML = `<div class="no-violations"><div class="check">✓</div><p>NO PROBLEMS FOUND</p></div>`;
     } else {
       data.compliance_results.forEach(issue => {
         const sev = (issue.severity || '').toLowerCase();
@@ -599,7 +699,7 @@
     Array.from(fileInput.files).forEach(f => form.append('files', f));
     form.append('clear_first', clearFirst);
 
-    setRulesStatus('Uploading and indexing…', 'loading');
+    setRulesStatus('Uploading...', 'loading');
     document.querySelectorAll('.btn-primary, .btn-danger').forEach(b => b.disabled = true);
 
     try {
@@ -607,8 +707,8 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Upload failed.');
 
-      let msg = `Indexed ${data.chunks_indexed} chunks from ${data.files_processed} file(s).`;
-      if (data.cleared_chunks > 0) msg += ` Cleared ${data.cleared_chunks} old chunks first.`;
+      let msg = `Saved ${data.chunks_indexed} parts from ${data.files_processed} file(s).`;
+      if (data.cleared_chunks > 0) msg += ` Removed ${data.cleared_chunks} old parts first.`;
       setRulesStatus(msg, 'ok');
     } catch (e) {
       setRulesStatus(e.message, 'err');
@@ -618,14 +718,14 @@
   }
 
   async function clearRules() {
-    if (!confirm('Clear the entire compliance rulebook? This cannot be undone.')) return;
-    setRulesStatus('Clearing all rules…', 'loading');
+    if (!confirm('Delete all your rules? You cannot undo this.')) return;
+    setRulesStatus('Deleting all rules...', 'loading');
     document.querySelectorAll('.btn-primary, .btn-danger').forEach(b => b.disabled = true);
     try {
       const res = await fetch(`${API_BASE}/clear-rules`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Clear failed.');
-      setRulesStatus(`Cleared ${data.deleted_chunks} rule chunks from the index.`, 'ok');
+      setRulesStatus(`Deleted ${data.deleted_chunks} rule parts.`, 'ok');
     } catch (e) {
       setRulesStatus(e.message, 'err');
     } finally {
